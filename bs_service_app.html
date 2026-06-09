@@ -511,16 +511,13 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
   </div>
   <div style="background:#f97316;height:3px;flex-shrink:0;"></div>
   <div style="background:#e8f0f9;padding:10px 14px;flex-shrink:0;">
-    <div style="display:flex;gap:8px;">
-      <button onclick="shareReportByEmail()" style="flex:1;padding:11px 10px;background:#1a3a5c;color:white;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">✉️ Share via Email</button>
-      <button onclick="downloadReportFile()" style="flex:1;padding:11px 10px;background:white;color:#1a3a5c;border:1.5px solid #1a3a5c;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">⬇ Save File</button>
-    </div>
-    <div style="font-size:11px;color:#475569;margin-top:8px;line-height:1.5;font-family:sans-serif;">
-      <strong>Share via Email</strong> opens Mail with the report text + recipients pre-filled. Then tap the 📎 paperclip and attach the saved file for photos.
+    <button onclick="printReport()" style="width:100%;padding:13px;background:#f97316;color:white;border:none;border-radius:9px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">🖨️ Print / Share as PDF</button>
+    <div style="font-size:11px;color:#475569;margin-top:8px;line-height:1.5;font-family:sans-serif;text-align:center;">
+      Tap above → then tap <strong>Share</strong> in the print screen → choose <strong>Mail</strong>
     </div>
   </div>
   <div class="report-frame-wrap">
-    <iframe class="report-frame" id="report-frame" sandbox="allow-same-origin"></iframe>
+    <iframe class="report-frame" id="report-frame" sandbox="allow-same-origin allow-scripts"></iframe>
   </div>
 </div>
 
@@ -1256,7 +1253,7 @@ function buildReportHTML() {
   return '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
     '<meta name="viewport" content="width=device-width,initial-scale=1">' +
     '<title>' + subject + '</title>' +
-    '<style>body{margin:0;background:#f0f4f8;}@media print{body{background:white;}}</style>' +
+    '<style>body{margin:0;background:#f0f4f8;}@media print{body{background:white;}.no-print{display:none!important;}}</style>' +
     '</head><body>' +
     '<div style="max-width:640px;margin:0 auto;background:white;min-height:100vh;">' +
     '<div style="background:#1a3a5c;padding:20px 24px;">' +
@@ -1295,26 +1292,9 @@ function downloadReportFile() {
   setTimeout(function(){ URL.revokeObjectURL(url); }, 5000);
 }
 
-function shareReportByEmail() {
-  // First trigger the file download so they have it ready to attach
-  downloadReportFile();
-
-  // Then open mailto with plain text report + recipients pre-filled
-  var to      = recipients.join(',');
-  var biz     = document.getElementById('biz').value || 'Service Report';
-  var date    = document.getElementById('sdate').value;
-  var note    = document.getElementById('send-note').value.trim();
-  var report  = buildReport();
-  var subject = 'B+S Service Report - ' + biz + ' - ' + date;
-  var hasPhotos = photos.some(function(p){ return p; });
-  var photoNote = hasPhotos ? '\n\n[Please see attached file for service photos]' : '';
-  var body    = (note ? note + '\n\n' : '') + report + photoNote;
-
-  setTimeout(function() {
-    window.location.href = 'mailto:' + encodeURIComponent(to) +
-      '?subject=' + encodeURIComponent(subject) +
-      '&body='    + encodeURIComponent(body);
-  }, 600);
+function printReport() {
+  var frame = document.getElementById('report-frame');
+  frame.contentWindow.print();
 }
 
 // ── SEND ─────────────────────────────────────────────────────────────────
