@@ -1406,18 +1406,19 @@ function downloadCSV() {
   var csvRow    = row.map(function(c){ return '"' + c + '"'; }).join(',');
   var csv       = csvHeader + '\n' + csvRow;
 
-  var blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
-  var url  = URL.createObjectURL(blob);
-  var a    = document.createElement('a');
   var bizRaw = document.getElementById('biz').value || 'Report';
-  var biz  = bizRaw.split(' ').join('_');
+  var biz  = bizRaw.replace(/[^a-zA-Z0-9_-]/g, '_');
   var date = document.getElementById('sdate').value || new Date().toISOString().split('T')[0];
-  a.href     = url;
-  a.download = 'BS_Service_' + biz + '_' + date + '.csv';
+  var filename = 'BS_Service_' + biz + '_' + date + '.csv';
+
+  // Use data URI instead of blob URL so it works when shared
+  var dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  var a = document.createElement('a');
+  a.href     = dataUri;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 }
 
 // ── PREVIEW ───────────────────────────────────────────────────────────────
