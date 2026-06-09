@@ -507,12 +507,17 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
 <div class="report-overlay" id="report-overlay">
   <div class="report-toolbar">
     <div class="report-toolbar-title">📄 Service Report</div>
-    <button class="report-toolbar-btn download" id="report-download-btn" onclick="downloadReportFile()">⬇ Save Report</button>
     <button class="report-toolbar-btn close" onclick="closeReportOverlay()">✕</button>
   </div>
   <div style="background:#f97316;height:3px;flex-shrink:0;"></div>
-  <div style="background:#e8f0f9;padding:10px 14px;font-size:12px;color:#1a3a5c;font-family:sans-serif;flex-shrink:0;">
-    📤 <strong>To email with photos:</strong> Tap <em>Save Report</em> to download the HTML file, then attach it to your email.
+  <div style="background:#e8f0f9;padding:10px 14px;flex-shrink:0;">
+    <div style="display:flex;gap:8px;">
+      <button onclick="shareReportByEmail()" style="flex:1;padding:11px 10px;background:#1a3a5c;color:white;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">✉️ Share via Email</button>
+      <button onclick="downloadReportFile()" style="flex:1;padding:11px 10px;background:white;color:#1a3a5c;border:1.5px solid #1a3a5c;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">⬇ Save File</button>
+    </div>
+    <div style="font-size:11px;color:#475569;margin-top:8px;line-height:1.5;font-family:sans-serif;">
+      <strong>Share via Email</strong> opens Mail with the report text + recipients pre-filled. Then tap the 📎 paperclip and attach the saved file for photos.
+    </div>
   </div>
   <div class="report-frame-wrap">
     <iframe class="report-frame" id="report-frame" sandbox="allow-same-origin"></iframe>
@@ -1288,6 +1293,28 @@ function downloadReportFile() {
   a.click();
   document.body.removeChild(a);
   setTimeout(function(){ URL.revokeObjectURL(url); }, 5000);
+}
+
+function shareReportByEmail() {
+  // First trigger the file download so they have it ready to attach
+  downloadReportFile();
+
+  // Then open mailto with plain text report + recipients pre-filled
+  var to      = recipients.join(',');
+  var biz     = document.getElementById('biz').value || 'Service Report';
+  var date    = document.getElementById('sdate').value;
+  var note    = document.getElementById('send-note').value.trim();
+  var report  = buildReport();
+  var subject = 'B+S Service Report - ' + biz + ' - ' + date;
+  var hasPhotos = photos.some(function(p){ return p; });
+  var photoNote = hasPhotos ? '\n\n[Please see attached file for service photos]' : '';
+  var body    = (note ? note + '\n\n' : '') + report + photoNote;
+
+  setTimeout(function() {
+    window.location.href = 'mailto:' + encodeURIComponent(to) +
+      '?subject=' + encodeURIComponent(subject) +
+      '&body='    + encodeURIComponent(body);
+  }, 600);
 }
 
 // ── SEND ─────────────────────────────────────────────────────────────────
