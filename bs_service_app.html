@@ -151,6 +151,16 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
 .overlay-title { font-size: 15px; font-weight: 800; color: var(--navy); }
 .overlay-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted); }
 
+/* REPORT VIEWER OVERLAY */
+.report-overlay { position: fixed; inset: 0; background: #1a3a5c; display: none; flex-direction: column; z-index: 1000; }
+.report-toolbar { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: #1a3a5c; flex-shrink: 0; }
+.report-toolbar-title { flex: 1; font-size: 14px; font-weight: 700; color: white; }
+.report-toolbar-btn { padding: 9px 16px; border: none; border-radius: 9px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; }
+.report-toolbar-btn.download { background: var(--orange); color: white; }
+.report-toolbar-btn.close { background: rgba(255,255,255,0.15); color: white; font-size: 18px; padding: 9px 13px; }
+.report-frame-wrap { flex: 1; overflow: hidden; background: #f0f4f8; }
+.report-frame { width: 100%; height: 100%; border: none; display: block; }
+
 .sect-lbl { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); padding: 4px 0 8px; }
 
 /* PASSWORD SCREEN */
@@ -433,7 +443,14 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
     </div>
   </div>
 
-  <button class="btn btn-orange" onclick="sendReport()">📧 Send</button>
+  <button class="btn btn-orange" onclick="sendReport()">📧 Send Report</button>
+  <div class="row2" style="margin-top:8px;">
+    <button class="btn btn-ghost" onclick="downloadCSV()">⬇️ CSV</button>
+    <button class="btn btn-ghost" onclick="openPhotoReport()">📸 Photo Report</button>
+  </div>
+  <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.5;">
+    Tap <strong>Photo Report</strong> to open a formatted report with your photos, then save or share it.
+  </div>
 </div>
 
 <!-- ERROR CODES TAB -->
@@ -483,6 +500,22 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
       <button class="overlay-close" onclick="document.getElementById('preview-overlay').style.display='none'">✕</button>
     </div>
     <div id="preview-body" style="font-size:12px; line-height:1.7; color:var(--text); white-space:pre-wrap; font-family:monospace;"></div>
+  </div>
+</div>
+
+<!-- REPORT VIEWER OVERLAY -->
+<div class="report-overlay" id="report-overlay">
+  <div class="report-toolbar">
+    <div class="report-toolbar-title">📄 Service Report</div>
+    <button class="report-toolbar-btn download" id="report-download-btn" onclick="downloadReportFile()">⬇ Save Report</button>
+    <button class="report-toolbar-btn close" onclick="closeReportOverlay()">✕</button>
+  </div>
+  <div style="background:#f97316;height:3px;flex-shrink:0;"></div>
+  <div style="background:#e8f0f9;padding:10px 14px;font-size:12px;color:#1a3a5c;font-family:sans-serif;flex-shrink:0;">
+    📤 <strong>To email with photos:</strong> Tap <em>Save Report</em> to download the HTML file, then attach it to your email.
+  </div>
+  <div class="report-frame-wrap">
+    <iframe class="report-frame" id="report-frame" sandbox="allow-same-origin"></iframe>
   </div>
 </div>
 
@@ -1050,8 +1083,9 @@ function renderPhotoGrid() {
   grid.innerHTML = PHOTO_LABELS.map(function(label, i){
     return '<label class="photo-slot" id="pslot-'+i+'">' +
       (photos[i]
-        ? '<img src="'+photos[i]+'">'
-        : '<span style="font-size:22px;">📷</span><span style="font-size:10px;color:var(--muted);text-align:center;padding:0 6px;">Tap to take photo</span>'
+        ? '<img src="'+photos[i]+'">' +
+          '<div class="photo-slot-overlay">' + label + '</div>'
+        : '<span style="font-size:22px;">📷</span><span style="font-size:10px;color:var(--muted);text-align:center;padding:0 6px;">' + label + '</span>'
       ) +
       '<input type="file" accept="image/*" capture="environment" style="display:none;" onchange="handlePhoto(event,'+i+')">' +
       '</label>';
@@ -1169,88 +1203,13 @@ function buildReport() {
   return lines.join('\n');
 }
 
-// ── SEND ─────────────────────────────────────────────────────────────────
-function sendReport() {
-  if (!recipients.length) { alert('Add at least one recipient email address.'); return; }
-
-  var biz     = document.getElementById('biz').value || 'Service Report';
-  var date    = document.getElementById('sdate').value;
-  var note    = document.getElementById('send-note').value.trim();
-  var subject = 'B+S Service Report - ' + biz + ' - ' + date;
-  var to      = recipients.join(',');
-  var report  = buildReport();
-
-  var hasPhotos = photos.some(function(p){ return p; });
-
-  if (hasPhotos) {
-    // Build HTML page with report + embedded photos, open in new tab for sharing
-    var photoLabels = ['Before service','After service','Non-warranty issue','Gas connections','Other'];
-    var reportLines = report.split('\n').map(function(l) {
-      if (l.indexOf('═') === 0 || l.indexOf('─') === 0) return '<hr style="border:none;border-top:1px solid #e2e8f0;margin:6px 0;">';
-      if (l.indexOf('B+S COMMERCIAL') === 0) return '<h2 style="color:#1a3a5c;font-family:Arial,sans-serif;font-size:15px;margin:0 0 4px;">' + l + '</h2>';
-      if (l.length > 2 && l === l.toUpperCase() && l.trim() !== '' && !l.match(/[✓✗⚠—★]/)) return '<h3 style="color:#1a3a5c;font-family:Arial,sans-serif;font-size:11px;margin:12px 0 3px;text-transform:uppercase;letter-spacing:0.5px;">' + l + '</h3>';
-      if (l.indexOf('✓') === 0) return '<div style="color:#16a34a;font-size:11px;font-family:monospace;padding:1px 0;">' + l + '</div>';
-      if (l.indexOf('✗') === 0) return '<div style="color:#dc2626;font-weight:bold;font-size:11px;font-family:monospace;padding:1px 0;">' + l + '</div>';
-      if (l.indexOf('⚠') === 0) return '<div style="color:#d97706;font-weight:bold;font-size:11px;padding:2px 0;">' + l + '</div>';
-      if (l.trim() === '') return '<div style="height:4px;"></div>';
-      return '<div style="font-size:11px;font-family:monospace;color:#1e293b;padding:1px 0;">' + l + '</div>';
-    }).join('');
-
-    var photoHTML = '<div style="margin-top:20px;border-top:2px solid #1a3a5c;padding-top:14px;"><h3 style="color:#1a3a5c;font-family:Arial,sans-serif;font-size:13px;margin:0 0 14px;">Service Photos</h3>';
-    photos.forEach(function(p, i) {
-      if (p) {
-        photoHTML += '<div style="margin-bottom:16px;"><img src="' + p + '" style="width:100%;max-width:560px;border-radius:8px;border:1px solid #e2e8f0;display:block;"></div>';
-      }
-    });
-    photoHTML += '</div>';
-
-    var noteHTML = note ? '<div style="background:#fff4ed;border:1px solid #fed7aa;border-radius:6px;padding:10px;margin-bottom:14px;font-family:Arial,sans-serif;font-size:12px;">' + note + '</div>' : '';
-
-    var page = '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + subject + '</title></head>' +
-      '<body style="margin:0;padding:0;background:#f0f4f8;">' +
-      '<div style="max-width:600px;margin:0 auto;background:white;min-height:100vh;">' +
-      '<div style="background:#1a3a5c;padding:16px 20px;">' +
-      '<div style="font-size:18px;font-weight:900;color:white;font-family:Arial,sans-serif;">B+S Service Report</div>' +
-      '<div style="font-size:11px;color:rgba(255,255,255,0.6);font-family:Arial,sans-serif;margin-top:2px;">' + biz + ' · ' + date + '</div>' +
-      '</div><div style="background:#f97316;height:3px;"></div>' +
-      '<div style="padding:16px 18px 40px;">' +
-      '<div style="background:#e8f0f9;border-radius:6px;padding:10px 12px;margin-bottom:14px;font-family:Arial,sans-serif;font-size:11px;color:#1a3a5c;">' +
-      '📤 <strong>To send with photos:</strong> Tap the Share button in your browser and choose Mail or Forward.' +
-      '</div>' +
-      noteHTML + reportLines + photoHTML +
-      '</div>' +
-      '<div style="background:#f8fafc;padding:12px 18px;border-top:1px solid #e2e8f0;font-size:10px;color:#94a3b8;font-family:Arial,sans-serif;">B+S Commercial Kitchens · +61 3 9469 4754 · clientservices@bscommercialkitchens.com</div>' +
-      '</div></body></html>';
-
-    // Use data: URL so the page works when shared
-    var encoded = 'data:text/html;charset=utf-8,' + encodeURIComponent(page);
-    window.open(encoded, '_blank');
-
-    // Also open mailto with plain text
-    setTimeout(function() {
-      var plainBody = (note ? note + '\n\n' : '') + report;
-      window.location.href = 'mailto:' + encodeURIComponent(to) +
-        '?subject=' + encodeURIComponent(subject) +
-        '&body='    + encodeURIComponent(plainBody);
-    }, 600);
-
-  } else {
-    // No photos — just open mailto directly
-    var plainBody = (note ? note + '\n\n' : '') + report;
-    window.location.href = 'mailto:' + encodeURIComponent(to) +
-      '?subject=' + encodeURIComponent(subject) +
-      '&body='    + encodeURIComponent(plainBody);
-  }
-
-  saveJob();
-}
-
-// ── PHOTO REPORT ────────────────────────────────────────────────────────────
-function openPhotoReport() {
+// ── REPORT HTML BUILDER ───────────────────────────────────────────────────
+function buildReportHTML() {
   var biz    = document.getElementById('biz').value || 'Service Report';
   var date   = document.getElementById('sdate').value;
   var note   = document.getElementById('send-note').value.trim();
   var report = buildReport();
+  var subject = 'B+S Service Report - ' + biz + ' - ' + date;
   var photoLabels = ['Before service','After service','Non-warranty issue','Gas connections','Other'];
 
   var reportLines = report.split('\n').map(function(l) {
@@ -1277,6 +1236,7 @@ function openPhotoReport() {
       '<h3 style="color:#1a3a5c;font-family:Arial,sans-serif;font-size:14px;margin:0 0 16px;">Service Photos</h3>';
     photos.forEach(function(p, i) {
       if (p) {
+        // p is already a data: URI (base64) — safe to embed directly
         photoHTML += '<div style="margin-bottom:20px;">' +
           '<div style="font-size:11px;font-weight:bold;color:#475569;font-family:Arial,sans-serif;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">' + photoLabels[i] + '</div>' +
           '<img src="' + p + '" style="width:100%;max-width:560px;border-radius:8px;border:1px solid #e2e8f0;display:block;">' +
@@ -1288,33 +1248,106 @@ function openPhotoReport() {
 
   var noteHTML = note ? '<div style="background:#fff4ed;border:1px solid #fed7aa;border-radius:8px;padding:12px;margin-bottom:16px;font-family:Arial,sans-serif;font-size:13px;color:#1e293b;">' + note + '</div>' : '';
 
-  var page = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
     '<meta name="viewport" content="width=device-width,initial-scale=1">' +
-    '<title>B+S Service Report - ' + biz + '</title>' +
-    '<style>body{margin:0;background:#f0f4f8;}' +
-    '@media print{body{background:white;}.no-print{display:none!important;}}' +
-    '</style></head><body>' +
+    '<title>' + subject + '</title>' +
+    '<style>body{margin:0;background:#f0f4f8;}@media print{body{background:white;}}</style>' +
+    '</head><body>' +
     '<div style="max-width:640px;margin:0 auto;background:white;min-height:100vh;">' +
     '<div style="background:#1a3a5c;padding:20px 24px;">' +
     '<div style="font-size:20px;font-weight:900;color:white;font-family:Arial,sans-serif;">B+S Service Report</div>' +
-    '<div style="font-size:11px;color:rgba(255,255,255,0.55);font-family:Arial,sans-serif;margin-top:3px;">B+S Commercial Kitchens</div>' +
+    '<div style="font-size:12px;color:rgba(255,255,255,0.6);font-family:Arial,sans-serif;margin-top:3px;">' + biz + ' · ' + date + '</div>' +
     '</div>' +
     '<div style="background:#f97316;height:4px;"></div>' +
     '<div style="padding:20px 20px 40px;">' +
-    '<div class="no-print" style="background:#e8f0f9;border-radius:8px;padding:12px;margin-bottom:16px;font-family:Arial,sans-serif;font-size:12px;color:#1a3a5c;">' +
-    '📤 <strong>To share with photos:</strong> Use the Share button in your browser, or take a screenshot and attach to your email.' +
-    '</div>' +
-    noteHTML +
-    reportLines +
-    photoHTML +
+    noteHTML + reportLines + photoHTML +
     '</div>' +
     '<div style="background:#f8fafc;padding:14px 20px;border-top:1px solid #e2e8f0;font-size:10px;color:#94a3b8;font-family:Arial,sans-serif;">' +
     'B+S Commercial Kitchens Pty Ltd · 57 Plateau Road Reservoir VIC 3073 · +61 3 9469 4754 · clientservices@bscommercialkitchens.com' +
     '</div></div></body></html>';
+}
 
-  var blob = new Blob([page], {type: 'text/html'});
+// Store the current report HTML for download
+var _currentReportHTML = '';
+var _currentReportFilename = '';
+
+function closeReportOverlay() {
+  document.getElementById('report-overlay').style.display = 'none';
+  // Clear iframe to free memory
+  document.getElementById('report-frame').srcdoc = '';
+}
+
+function downloadReportFile() {
+  if (!_currentReportHTML) return;
+  var blob = new Blob([_currentReportHTML], {type: 'text/html;charset=utf-8'});
   var url  = URL.createObjectURL(blob);
-  window.open(url, '_blank');
+  var a    = document.createElement('a');
+  a.href     = url;
+  a.download = _currentReportFilename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 5000);
+}
+
+// ── SEND ─────────────────────────────────────────────────────────────────
+function sendReport() {
+  if (!recipients.length) { alert('Add at least one recipient email address.'); return; }
+
+  var biz     = document.getElementById('biz').value || 'Service Report';
+  var date    = document.getElementById('sdate').value;
+  var note    = document.getElementById('send-note').value.trim();
+  var subject = 'B+S Service Report - ' + biz + ' - ' + date;
+  var to      = recipients.join(',');
+  var report  = buildReport();
+  var hasPhotos = photos.some(function(p){ return p; });
+
+  if (hasPhotos) {
+    // Show the in-app report viewer with the self-contained HTML
+    var pageHTML = buildReportHTML();
+    var bizSafe  = biz.replace(/[^a-zA-Z0-9_-]/g, '_');
+    _currentReportHTML     = pageHTML;
+    _currentReportFilename = 'BS_Service_' + bizSafe + '_' + date + '.html';
+
+    // Display in iframe using srcdoc (no blob URL needed — works on all devices)
+    var overlay = document.getElementById('report-overlay');
+    var frame   = document.getElementById('report-frame');
+    frame.srcdoc = pageHTML;
+    overlay.style.display = 'flex';
+
+    // Also trigger mailto with plain text body
+    setTimeout(function() {
+      var plainBody = (note ? note + '\n\n' : '') + report + '\n\n[Service photos attached separately]';
+      window.location.href = 'mailto:' + encodeURIComponent(to) +
+        '?subject=' + encodeURIComponent(subject) +
+        '&body='    + encodeURIComponent(plainBody);
+    }, 800);
+
+  } else {
+    // No photos — send plain text via mailto directly
+    var plainBody = (note ? note + '\n\n' : '') + report;
+    window.location.href = 'mailto:' + encodeURIComponent(to) +
+      '?subject=' + encodeURIComponent(subject) +
+      '&body='    + encodeURIComponent(plainBody);
+  }
+
+  saveJob();
+}
+
+// ── PHOTO REPORT (called from history or elsewhere) ───────────────────────
+function openPhotoReport() {
+  var biz  = document.getElementById('biz').value || 'Service Report';
+  var date = document.getElementById('sdate').value;
+  var bizSafe = biz.replace(/[^a-zA-Z0-9_-]/g, '_');
+
+  var pageHTML = buildReportHTML();
+  _currentReportHTML     = pageHTML;
+  _currentReportFilename = 'BS_Service_' + bizSafe + '_' + date + '.html';
+
+  var overlay = document.getElementById('report-overlay');
+  var frame   = document.getElementById('report-frame');
+  frame.srcdoc = pageHTML;
+  overlay.style.display = 'flex';
 }
 
 // ── CSV EXPORT ──────────────────────────────────────────────────────────────
