@@ -1293,8 +1293,13 @@ function downloadReportFile() {
 }
 
 function printReport() {
-  var frame = document.getElementById('report-frame');
-  frame.contentWindow.print();
+  var printWin = window.open('', '_blank');
+  printWin.document.write(_currentReportHTML);
+  printWin.document.close();
+  printWin.focus();
+  setTimeout(function() {
+    printWin.print();
+  }, 500);
 }
 
 // ── SEND ─────────────────────────────────────────────────────────────────
