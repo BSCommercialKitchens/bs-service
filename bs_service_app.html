@@ -485,22 +485,23 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
 
 <!-- HISTORY TAB -->
 <div class="screen" id="screen-history">
-  <!-- History password overlay -->
-  <div id="hist-pw-overlay" style="position:fixed;inset:0;background:rgba(15,36,64,0.97);z-index:500;display:flex;align-items:center;justify-content:center;padding:24px;">
-    <div style="background:white;border-radius:16px;padding:28px 24px;width:100%;max-width:340px;text-align:center;">
-      <div style="font-size:32px;margin-bottom:12px;">🔒</div>
-      <div style="font-size:17px;font-weight:800;color:var(--navy);margin-bottom:6px;">History Access</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:20px;">Enter the History password to continue</div>
-      <input id="hist-pw-input" type="password" placeholder="Password" onkeydown="if(event.key==='Enter')unlockHistory()"
-        style="width:100%;padding:13px 14px;border:1.5px solid var(--mid);border-radius:10px;font-size:15px;font-family:inherit;outline:none;margin-bottom:10px;text-align:center;">
-      <div id="hist-pw-error" style="color:var(--red);font-size:12px;min-height:18px;margin-bottom:8px;"></div>
-      <button onclick="unlockHistory()" style="width:100%;padding:13px;background:var(--orange);color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Unlock</button>
-    </div>
-  </div>
   <div id="hist-list">
     <div class="empty"><div class="empty-icon">📁</div>
       <div class="empty-txt">No jobs yet</div>
       <div class="empty-sub">Sent jobs appear here</div></div>
+  </div>
+</div>
+
+<!-- HISTORY PASSWORD OVERLAY (outside screen div so it always renders) -->
+<div id="hist-pw-overlay" style="position:fixed;inset:0;background:rgba(15,36,64,0.97);z-index:500;display:none;align-items:center;justify-content:center;padding:24px;">
+  <div style="background:white;border-radius:16px;padding:28px 24px;width:100%;max-width:340px;text-align:center;">
+    <div style="font-size:32px;margin-bottom:12px;">🔒</div>
+    <div style="font-size:17px;font-weight:800;color:var(--navy);margin-bottom:6px;">History Access</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px;">Enter the History password to continue</div>
+    <input id="hist-pw-input" type="password" placeholder="Password" onkeydown="if(event.key==='Enter')unlockHistory()"
+      style="width:100%;padding:13px 14px;border:1.5px solid var(--mid);border-radius:10px;font-size:15px;font-family:inherit;outline:none;margin-bottom:10px;text-align:center;">
+    <div id="hist-pw-error" style="color:var(--red);font-size:12px;min-height:18px;margin-bottom:8px;"></div>
+    <button onclick="unlockHistory()" style="width:100%;padding:13px;background:var(--orange);color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Unlock</button>
   </div>
 </div>
 
