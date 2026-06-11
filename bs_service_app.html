@@ -1556,28 +1556,24 @@ function saveJob() {
 
   // Post to Google Sheets (fire and forget)
   try {
-    fetch(SHEETS_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        date:      job.date,
-        biz:       job.biz,
-        address:   job.address,
-        contact:   job.contact,
-        phone:     job.phone,
-        erange:    job.erange,
-        type:      job.type,
-        model:     job.model,
-        serial:    job.serial,
-        tech:      job.tech,
-        pass:      job.pass,
-        fail:      job.fail,
-        flagCount: job.flagCount,
-        flags:     job.flags,
-        sent:      job.sent
-      })
-    });
+    var img = new Image();
+    img.src = SHEETS_URL + '?data=' + encodeURIComponent(JSON.stringify({
+      date:      job.date,
+      biz:       job.biz,
+      address:   job.address,
+      contact:   job.contact,
+      phone:     job.phone,
+      erange:    job.erange,
+      type:      job.type,
+      model:     job.model,
+      serial:    job.serial,
+      tech:      job.tech,
+      pass:      job.pass,
+      fail:      job.fail,
+      flagCount: job.flagCount,
+      flags:     job.flags,
+      sent:      job.sent
+    }));
   } catch(e) {}
   renderHistory();
   go('history');
