@@ -939,7 +939,7 @@ try {
   if (_stored) jobs = JSON.parse(_stored);
 } catch(e) { jobs = []; }
 
-var HISTORY_PASSWORD = 'BShistory2026';
+var SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyO9NlhJev1GglqoDyDRcz8HlIbWcwU8oPQc1XvyTcKzeTGJlbjViwrvM9-C-mOpPZ3fQ/exec';
 
 // ── NAV ───────────────────────────────────────────────────────────────────
 function go(tab) {
@@ -1546,12 +1546,37 @@ function saveJob() {
   try {
     localStorage.setItem('bs_jobs_v2', JSON.stringify(jobs));
   } catch(e) {
-    // If quota exceeded, save without photos
     try {
       var slim = jobs.map(function(j){ var s=Object.assign({},j); s.photos=[null,null,null,null,null]; return s; });
       localStorage.setItem('bs_jobs_v2', JSON.stringify(slim));
     } catch(e2) {}
   }
+
+  // Post to Google Sheets (fire and forget)
+  try {
+    fetch(SHEETS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        date:      job.date,
+        biz:       job.biz,
+        address:   job.address,
+        contact:   job.contact,
+        phone:     job.phone,
+        erange:    job.erange,
+        type:      job.type,
+        model:     job.model,
+        serial:    job.serial,
+        tech:      job.tech,
+        pass:      job.pass,
+        fail:      job.fail,
+        flagCount: job.flagCount,
+        flags:     job.flags,
+        sent:      job.sent
+      })
+    });
+  } catch(e) {}
   renderHistory();
   go('history');
 }
