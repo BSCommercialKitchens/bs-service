@@ -929,7 +929,7 @@ var CHECKLISTS = {
 };
 
 // ── STATE ─────────────────────────────────────────────────────────────────
-var checklist = [], states = {}, flags = [], recipients = [], jobs = [];
+var checklist = [], states = {}, flags = [], recipients = ['clientservices@bscommercialkitchens.com'], jobs = [];
 var PHOTO_LABELS = ['Before service','After service','Non-warranty issue','Gas connections','Other'];
 var photos = [null,null,null,null,null];
 
@@ -1141,18 +1141,31 @@ function addRecipient() {
   renderRecipients();
 }
 
-function removeRecipient(i) { recipients.splice(i,1); renderRecipients(); }
+function removeRecipient(i) {
+  if (recipients[i] === DEFAULT_RECIPIENT) return;
+  recipients.splice(i,1);
+  renderRecipients();
+}
+
+var DEFAULT_RECIPIENT = 'clientservices@bscommercialkitchens.com';
 
 function renderRecipients() {
   var c = document.getElementById('recipients-list');
   if (!recipients.length) { c.innerHTML = ''; return; }
   c.innerHTML = recipients.map(function(r,i){
+    var isDefault = (r === DEFAULT_RECIPIENT);
     return '<div class="recipient-row">' +
-      '<input type="email" value="'+r+'" readonly>' +
-      '<button class="rm" onclick="removeRecipient('+i+')">✕</button>' +
+      '<input type="email" value="'+r+'" readonly' + (isDefault ? ' style="color:var(--navy);font-weight:600;"' : '') + '>' +
+      (isDefault
+        ? '<span style="padding:0 10px;font-size:11px;color:var(--muted);white-space:nowrap;">always</span>'
+        : '<button class="rm" onclick="removeRecipient('+i+')">✕</button>'
+      ) +
       '</div>';
   }).join('');
 }
+
+// Render default recipient on load
+document.addEventListener('DOMContentLoaded', function(){ renderRecipients(); });
 
 // ── BUILD REPORT ──────────────────────────────────────────────────────────
 function buildReport() {
@@ -1701,7 +1714,7 @@ function checkPassword() {
   var entered = document.getElementById('pw-input').value;
   if (entered === APP_PASSWORD) {
     document.getElementById('pw-screen').style.display = 'none';
-    sessionStorage.setItem('bs_unlocked', '1');
+    try { sessionStorage.setItem('bs_unlocked', '1'); } catch(e) {}
   } else {
     var err = document.getElementById('pw-error');
     err.textContent = 'Incorrect password. Try again.';
@@ -1712,9 +1725,11 @@ function checkPassword() {
 }
 
 // Auto-unlock if already authenticated this session
-if (sessionStorage.getItem('bs_unlocked') === '1') {
-  document.getElementById('pw-screen').style.display = 'none';
-}
+try {
+  if (sessionStorage.getItem('bs_unlocked') === '1') {
+    document.getElementById('pw-screen').style.display = 'none';
+  }
+} catch(e) {}
 
 
 // ── ERROR CODES ───────────────────────────────────────────────────────────────
