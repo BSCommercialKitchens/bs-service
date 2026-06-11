@@ -485,6 +485,18 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
 
 <!-- HISTORY TAB -->
 <div class="screen" id="screen-history">
+  <!-- History password overlay -->
+  <div id="hist-pw-overlay" style="position:fixed;inset:0;background:rgba(15,36,64,0.97);z-index:500;display:flex;align-items:center;justify-content:center;padding:24px;">
+    <div style="background:white;border-radius:16px;padding:28px 24px;width:100%;max-width:340px;text-align:center;">
+      <div style="font-size:32px;margin-bottom:12px;">🔒</div>
+      <div style="font-size:17px;font-weight:800;color:var(--navy);margin-bottom:6px;">History Access</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:20px;">Enter the History password to continue</div>
+      <input id="hist-pw-input" type="password" placeholder="Password" onkeydown="if(event.key==='Enter')unlockHistory()"
+        style="width:100%;padding:13px 14px;border:1.5px solid var(--mid);border-radius:10px;font-size:15px;font-family:inherit;outline:none;margin-bottom:10px;text-align:center;">
+      <div id="hist-pw-error" style="color:var(--red);font-size:12px;min-height:18px;margin-bottom:8px;"></div>
+      <button onclick="unlockHistory()" style="width:100%;padding:13px;background:var(--orange);color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Unlock</button>
+    </div>
+  </div>
   <div id="hist-list">
     <div class="empty"><div class="empty-icon">📁</div>
       <div class="empty-txt">No jobs yet</div>
@@ -510,11 +522,12 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
     <button class="report-toolbar-btn close" onclick="closeReportOverlay()">✕</button>
   </div>
   <div style="background:#f97316;height:3px;flex-shrink:0;"></div>
-  <div style="background:#e8f0f9;padding:10px 14px;flex-shrink:0;">
-    <button onclick="printReport()" style="width:100%;padding:13px;background:#f97316;color:white;border:none;border-radius:9px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">🖨️ Print / Share as PDF</button>
-    <div style="font-size:11px;color:#475569;margin-top:8px;line-height:1.5;font-family:sans-serif;text-align:center;">
-      Tap above → then tap <strong>Share</strong> in the print screen → choose <strong>Mail</strong>
-    </div>
+  <div style="background:#e8f0f9;padding:10px 14px;flex-shrink:0;display:flex;gap:8px;">
+    <button onclick="printReport()" style="flex:2;padding:11px 10px;background:#f97316;color:white;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">🖨️ Print / Share as PDF</button>
+    <button onclick="downloadCSVFromHistory()" style="flex:1;padding:11px 10px;background:white;color:#1a3a5c;border:1.5px solid #1a3a5c;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⬇ CSV</button>
+  </div>
+  <div style="background:#e8f0f9;padding:0 14px 10px;font-size:11px;color:#475569;font-family:sans-serif;text-align:center;flex-shrink:0;">
+    Tap above → then tap <strong>Share</strong> in the print screen → choose <strong>Mail</strong>
   </div>
   <div class="report-frame-wrap">
     <iframe class="report-frame" id="report-frame" sandbox="allow-same-origin allow-scripts"></iframe>
@@ -920,6 +933,14 @@ var checklist = [], states = {}, flags = [], recipients = [], jobs = [];
 var PHOTO_LABELS = ['Before service','After service','Non-warranty issue','Gas connections','Other'];
 var photos = [null,null,null,null,null];
 
+// Load persisted jobs from localStorage
+try {
+  var _stored = localStorage.getItem('bs_jobs_v2');
+  if (_stored) jobs = JSON.parse(_stored);
+} catch(e) { jobs = []; }
+
+var HISTORY_PASSWORD = 'BShistory2026';
+
 // ── NAV ───────────────────────────────────────────────────────────────────
 function go(tab) {
   document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
@@ -927,6 +948,14 @@ function go(tab) {
   document.getElementById('screen-'+tab).classList.add('active');
   document.getElementById('tab-'+tab).classList.add('active');
   window.scrollTo(0,0);
+  if (tab === 'history') {
+    if (!_historyUnlocked) {
+      document.getElementById('hist-pw-overlay').style.display = 'flex';
+      setTimeout(function(){ document.getElementById('hist-pw-input').focus(); }, 100);
+    } else {
+      renderHistoryList();
+    }
+  }
 }
 
 // ── EQUIPMENT ─────────────────────────────────────────────────────────────
@@ -1275,8 +1304,8 @@ var _currentReportFilename = '';
 
 function closeReportOverlay() {
   document.getElementById('report-overlay').style.display = 'none';
-  // Clear iframe to free memory
   document.getElementById('report-frame').srcdoc = '';
+  _historyJobForCSV = null;
 }
 
 function downloadReportFile() {
@@ -1300,6 +1329,51 @@ function printReport() {
   setTimeout(function() {
     printWin.print();
   }, 500);
+}
+
+function downloadCSVFromHistory() {
+  // Use the history job if viewing from history, otherwise current job
+  var j = _historyJobForCSV;
+  var csvText;
+  if (j) {
+    // Build CSV from saved job data
+    var rows = [
+      ['Field','Value'],
+      ['Business', j.biz||''],
+      ['Address',  j.address||''],
+      ['Contact',  j.contact||''],
+      ['Phone',    j.phone||''],
+      ['Range',    j.erange||''],
+      ['Type',     j.type||''],
+      ['Model',    j.model||''],
+      ['Serial',   j.serial||''],
+      ['Date',     j.date||''],
+      ['Technician', j.tech||''],
+      ['Pass',     j.pass||0],
+      ['Fail',     j.fail||0],
+      ['Issues',   j.flagCount||0],
+      ['Sent To',  j.sent||'']
+    ];
+    if (j.flags && j.flags.length) {
+      rows.push(['','']);
+      rows.push(['ISSUES','']);
+      j.flags.forEach(function(f){ rows.push([f, '']); });
+    }
+    csvText = rows.map(function(r){
+      return r.map(function(c){ return '"' + String(c).replace(/"/g,'""') + '"'; }).join(',');
+    }).join('\n');
+    var biz  = (j.biz||'Report').replace(/[^a-zA-Z0-9_-]/g,'_');
+    var date = j.date || '';
+    var dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvText);
+    var a = document.createElement('a');
+    a.href = dataUri;
+    a.download = 'BS_Service_' + biz + '_' + date + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } else {
+    downloadCSV();
+  }
 }
 
 // ── SEND ─────────────────────────────────────────────────────────────────
@@ -1431,40 +1505,191 @@ function previewReport() {
 function saveJob() {
   var pass = Object.values(states).filter(function(v){ return v==='pass'; }).length;
   var fail = Object.values(states).filter(function(v){ return v==='fail'; }).length;
-  jobs.unshift({
-    biz:  document.getElementById('biz').value,
-    type: document.getElementById('etype').value,
-    date: document.getElementById('sdate').value,
-    tech: document.getElementById('tech').value,
+  var job = {
+    id: Date.now(),
+    biz:       document.getElementById('biz').value,
+    address:   document.getElementById('addr').value,
+    contact:   document.getElementById('contact').value,
+    phone:     document.getElementById('phone').value,
+    erange:    document.getElementById('erange').value,
+    type:      document.getElementById('etype').value,
+    model:     document.getElementById('model').value,
+    serial:    document.getElementById('serial').value,
+    date:      document.getElementById('sdate').value,
+    tech:      document.getElementById('tech').value,
     pass: pass, fail: fail,
     hasIssues: fail > 0 || flags.length > 0,
     flagCount: flags.length,
-    sent: recipients.join(', ')
-  });
+    sent:      recipients.join(', '),
+    // Save full data for report replay
+    reportText: buildReport(),
+    photos:    photos.slice(),
+    flags:     flags.slice(),
+    states:    JSON.parse(JSON.stringify(states)),
+    checklist: checklist.map(function(i){ return {t:i.t,c:i.c}; })
+  };
+  jobs.unshift(job);
+  // Persist — strip photos if storage is getting full (photos are large)
+  try {
+    localStorage.setItem('bs_jobs_v2', JSON.stringify(jobs));
+  } catch(e) {
+    // If quota exceeded, save without photos
+    try {
+      var slim = jobs.map(function(j){ var s=Object.assign({},j); s.photos=[null,null,null,null,null]; return s; });
+      localStorage.setItem('bs_jobs_v2', JSON.stringify(slim));
+    } catch(e2) {}
+  }
   renderHistory();
   go('history');
 }
 
+// ── HISTORY PASSWORD ──────────────────────────────────────────────────────
+var _historyUnlocked = false;
+
+function unlockHistory() {
+  var entered = document.getElementById('hist-pw-input').value;
+  if (entered === HISTORY_PASSWORD) {
+    _historyUnlocked = true;
+    document.getElementById('hist-pw-overlay').style.display = 'none';
+    renderHistoryList();
+  } else {
+    var err = document.getElementById('hist-pw-error');
+    err.textContent = 'Incorrect password.';
+    document.getElementById('hist-pw-input').value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+
+function openHistoryJob(idx) {
+  var j = jobs[idx];
+  if (!j) return;
+  // Restore report data into module-level vars so buildReportHTML() works
+  _currentReportHTML = buildReportHTMLFromJob(j);
+  var bizSafe = (j.biz||'Report').replace(/[^a-zA-Z0-9_-]/g,'_');
+  _currentReportFilename = 'BS_Service_' + bizSafe + '_' + (j.date||'') + '.html';
+
+  var overlay = document.getElementById('report-overlay');
+  var frame   = document.getElementById('report-frame');
+  frame.srcdoc = _currentReportHTML;
+  overlay.style.display = 'flex';
+
+  // Also set up CSV for this job
+  _historyJobForCSV = j;
+}
+
+var _historyJobForCSV = null;
+
+function buildReportHTMLFromJob(j) {
+  // Temporarily swap in this job's photos so buildReportHTML uses them
+  var savedPhotos = photos.slice();
+  if (j.photos) photos = j.photos.slice();
+  // Temporarily swap field values
+  var fields = ['biz','addr','contact','phone','erange','etype','model','serial','sdate','tech'];
+  var savedVals = {};
+  fields.forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) { savedVals[id] = el.value; el.value = j[id.replace('addr','address').replace('etype','type').replace('sdate','date').replace('erange','erange')] || el.value; }
+  });
+  // Map field IDs to job keys
+  var map = {biz:'biz',addr:'address',contact:'contact',phone:'phone',erange:'erange',etype:'type',model:'model',serial:'serial',sdate:'date',tech:'tech'};
+  fields.forEach(function(id){ var el=document.getElementById(id); if(el && map[id] && j[map[id]]!==undefined) el.value=j[map[id]]||''; });
+
+  // Use saved reportText for the report body (avoids needing to restore full checklist state)
+  var html = buildReportHTMLWithText(j.reportText || '', j);
+
+  // Restore
+  photos = savedPhotos;
+  fields.forEach(function(id){ var el=document.getElementById(id); if(el) el.value=savedVals[id]||''; });
+  return html;
+}
+
+function buildReportHTMLWithText(reportText, j) {
+  var biz  = j.biz  || '—';
+  var date = j.date || '—';
+  var note = '';
+  var photoLabels = PHOTO_LABELS;
+  var jobPhotos   = (j.photos || [null,null,null,null,null]);
+
+  var reportLines = reportText.split('\n').map(function(l) {
+    if (l.indexOf('═') === 0 || l.indexOf('─') === 0)
+      return '<hr style="border:none;border-top:1px solid #e2e8f0;margin:8px 0;">';
+    if (l.indexOf('B+S COMMERCIAL') === 0)
+      return '<h2 style="color:#1a3a5c;font-family:Arial,sans-serif;font-size:16px;margin:0 0 4px;">' + l + '</h2>';
+    if (l.length > 2 && l === l.toUpperCase() && l.trim() !== '' && !l.match(/[✓✗⚠—★]/))
+      return '<h3 style="color:#1a3a5c;font-family:Arial,sans-serif;font-size:12px;margin:14px 0 4px;text-transform:uppercase;letter-spacing:0.5px;">' + l + '</h3>';
+    if (l.indexOf('✓') === 0)
+      return '<div style="color:#16a34a;font-size:12px;font-family:monospace;padding:2px 0;">' + l + '</div>';
+    if (l.indexOf('✗') === 0)
+      return '<div style="color:#dc2626;font-weight:bold;font-size:12px;font-family:monospace;padding:2px 0;">' + l + '</div>';
+    if (l.indexOf('⚠') === 0)
+      return '<div style="color:#d97706;font-weight:bold;font-size:12px;font-family:Arial,sans-serif;padding:3px 0;">' + l + '</div>';
+    if (l.trim() === '') return '<div style="height:6px;"></div>';
+    return '<div style="font-size:12px;font-family:monospace;color:#1e293b;padding:1px 0;">' + l + '</div>';
+  }).join('');
+
+  var photoHTML = '';
+  var hasPhotos = jobPhotos.some(function(p){ return p; });
+  if (hasPhotos) {
+    photoHTML = '<div style="margin-top:24px;border-top:2px solid #1a3a5c;padding-top:16px;">' +
+      '<h3 style="color:#1a3a5c;font-family:Arial,sans-serif;font-size:14px;margin:0 0 16px;">Service Photos</h3>';
+    jobPhotos.forEach(function(p, i) {
+      if (p) {
+        photoHTML += '<div style="margin-bottom:20px;">' +
+          '<div style="font-size:11px;font-weight:bold;color:#475569;font-family:Arial,sans-serif;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">' + photoLabels[i] + '</div>' +
+          '<img src="' + p + '" style="width:100%;max-width:560px;border-radius:8px;border:1px solid #e2e8f0;display:block;">' +
+          '</div>';
+      }
+    });
+    photoHTML += '</div>';
+  }
+
+  var subject = 'B+S Service Report - ' + biz + ' - ' + date;
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>' + subject + '</title>' +
+    '<style>body{margin:0;background:#f0f4f8;}@media print{body{background:white;}.no-print{display:none!important;}}</style>' +
+    '</head><body>' +
+    '<div style="max-width:640px;margin:0 auto;background:white;min-height:100vh;">' +
+    '<div style="background:#1a3a5c;padding:20px 24px;">' +
+    '<div style="font-size:20px;font-weight:900;color:white;font-family:Arial,sans-serif;">B+S Service Report</div>' +
+    '<div style="font-size:12px;color:rgba(255,255,255,0.6);font-family:Arial,sans-serif;margin-top:3px;">' + biz + ' · ' + date + '</div>' +
+    '</div>' +
+    '<div style="background:#f97316;height:4px;"></div>' +
+    '<div style="padding:20px 20px 40px;">' +
+    reportLines + photoHTML +
+    '</div>' +
+    '<div style="background:#f8fafc;padding:14px 20px;border-top:1px solid #e2e8f0;font-size:10px;color:#94a3b8;font-family:Arial,sans-serif;">' +
+    'B+S Commercial Kitchens Pty Ltd · 57 Plateau Road Reservoir VIC 3073 · +61 3 9469 4754 · clientservices@bscommercialkitchens.com' +
+    '</div></div></body></html>';
+}
+
 function renderHistory() {
+  if (_historyUnlocked) renderHistoryList();
+}
+
+function renderHistoryList() {
   var c = document.getElementById('hist-list');
   if (!jobs.length) {
     c.innerHTML = '<div class="empty"><div class="empty-icon">📁</div><div class="empty-txt">No jobs yet</div><div class="empty-sub">Sent jobs appear here</div></div>';
     return;
   }
-  c.innerHTML = '<div class="card"><div>' + jobs.map(function(j){
+  c.innerHTML = '<div class="card"><div>' + jobs.map(function(j, idx){
     var d = j.date ? new Date(j.date).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : '—';
-    return '<div class="hist-item">' +
+    var hasPhotos = j.photos && j.photos.some(function(p){ return p; });
+    return '<div class="hist-item" onclick="openHistoryJob(' + idx + ')" style="cursor:pointer;">' +
       '<div class="hist-dot ' + (j.hasIssues?'bad':'ok') + '"></div>' +
       '<div style="flex:1">' +
-        '<div class="hist-biz">' + j.biz + '</div>' +
+        '<div class="hist-biz">' + (j.biz||'—') + '</div>' +
         '<div class="hist-meta">' + (j.type||'—') + ' · ' + d + ' · ' + (j.tech||'—') + '</div>' +
         '<div>' +
           '<span class="badge b-pass">✓ ' + j.pass + '</span>' +
           (j.fail  ? '<span class="badge b-fail">✗ ' + j.fail + '</span>' : '') +
           (j.flagCount ? '<span class="badge b-warn">⚠ ' + j.flagCount + ' issues</span>' : '') +
+          (hasPhotos ? '<span class="badge" style="background:#e0f2fe;color:#0369a1;">📷 photos</span>' : '') +
         '</div>' +
-        '<div style="font-size:10px;color:var(--muted);margin-top:3px;">Sent to: ' + j.sent + '</div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-top:3px;">Sent to: ' + (j.sent||'—') + '</div>' +
       '</div>' +
+      '<div style="font-size:18px;color:var(--muted);padding-left:6px;">›</div>' +
     '</div>';
   }).join('') + '</div></div>';
 }
