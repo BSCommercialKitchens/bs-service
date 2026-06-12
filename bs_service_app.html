@@ -291,62 +291,9 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-head"><div class="card-icon">⚙️</div>
-      <div><div class="card-title">Equipment</div></div>
-    </div>
-    <div class="card-body">
-      <div class="row2">
-        <div class="field"><label class="lbl">Range *</label>
-          <select class="inp" id="erange" onchange="onRangeChange()">
-            <option value="">Select...</option>
-            <option>B+S Black</option>
-            <option>K+</option>
-            <option>Rapid</option>
-            <option>SCooker</option>
-          </select></div>
-        <div class="field"><label class="lbl">Type *</label>
-          <select class="inp" id="etype" onchange="onTypeChange()">
-            <option value="">Select...</option>
-          </select></div>
-      </div>
-      <div class="row2">
-        <div class="field"><label class="lbl">Model Code *</label>
-          <input class="inp" id="model" type="text" placeholder="e.g. GRP-6" list="model-codes-list" autocomplete="off"></div>
-          <datalist id="model-codes-list"></datalist>
-        <div class="field"><label class="lbl">Serial / Mfg Date *</label>
-          <input class="inp" id="serial" type="text" placeholder="Serial or date"></div>
-      </div>
-      <div class="row2">
-        <div class="field"><label class="lbl">Gas Type</label>
-          <select class="inp" id="gas">
-            <option value="ng">Natural Gas (NG)</option>
-            <option value="lpg">LPG</option>
-          </select></div>
-        <div class="field"><label class="lbl">Warranty</label>
-          <select class="inp" id="warranty">
-            <option value="">Unknown</option>
-            <option>In Warranty</option>
-            <option>Out of Warranty</option>
-          </select></div>
-      </div>
-    </div>
-  </div>
+  <div id="units-container"></div>
 
-  <div class="card" id="preflight-card">
-    <div class="card-head"><div class="card-icon" id="preflight-icon">📊</div>
-      <div><div class="card-title" id="preflight-title">Gas Pressure</div>
-           <div class="card-sub" id="preflight-sub">Record before starting</div></div>
-    </div>
-    <div class="card-body" id="preflight-body">
-      <div class="row2">
-        <div class="field"><label class="lbl">Static (kPa) *</label>
-          <input class="inp" id="p-static" type="number" step="0.01" placeholder="e.g. 2.75" inputmode="decimal"></div>
-        <div class="field"><label class="lbl">Dynamic (kPa) *</label>
-          <input class="inp" id="p-dynamic" type="number" step="0.01" placeholder="e.g. 2.50" inputmode="decimal"></div>
-      </div>
-    </div>
-  </div>
+  <button class="btn btn-ghost" type="button" onclick="addUnit()" style="margin-top:6px;">➕ Add Another Unit</button>
 
   <button class="btn btn-navy" onclick="startChecklist()">Start Checklist →</button>
 </div>
@@ -408,15 +355,7 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-head"><div class="card-icon">📷</div>
-      <div><div class="card-title">Photos</div>
-        <div class="card-sub">Photos are included automatically in the email</div></div>
-    </div>
-    <div class="card-body">
-      <div class="photo-grid" id="photo-grid"></div>
-    </div>
-  </div>
+  <div id="photos-container"></div>
 
   <button class="btn btn-navy" onclick="go('send')">Next: Send Report →</button>
 </div>
@@ -438,18 +377,7 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-head"><div class="card-icon">💳</div>
-      <div><div class="card-title">Billing Status</div>
-        <div class="card-sub">Is this job chargeable to the customer?</div></div>
-    </div>
-    <div class="card-body">
-      <div class="row2">
-        <button type="button" class="btn-toggle" id="bill-warranty" onclick="setBillingStatus('warranty')">🛡️ Warranty<br><span style="font-size:10px;font-weight:400;">No charge</span></button>
-        <button type="button" class="btn-toggle" id="bill-chargeable" onclick="setBillingStatus('chargeable')">💵 Chargeable<br><span style="font-size:10px;font-weight:400;">Bill customer</span></button>
-      </div>
-    </div>
-  </div>
+  <div id="billing-container"></div>
 
   <div class="card">
     <div class="card-head"><div class="card-icon">📝</div>
@@ -1177,9 +1105,12 @@ var CHECKLISTS = {
 
 // ── STATE ─────────────────────────────────────────────────────────────────
 var checklist = [], states = {}, flags = [], recipients = ['clientservices@bscommercialkitchens.com'], jobs = [];
-var billingStatus = null; // 'warranty' or 'chargeable'
+var units = [];
+function makeUnit() {
+  return { erange:'', etype:'', model:'', serial:'', gas:'ng', warranty:'', pStatic:'', pDynamic:'', pErrorCode:'', billing:null, photos:[null,null,null,null,null] };
+}
+units.push(makeUnit());
 var PHOTO_LABELS = ['Before service','After service','Non-warranty issue','Gas connections','Other'];
-var photos = [null,null,null,null,null];
 
 // Load persisted jobs from localStorage
 try {
@@ -1197,6 +1128,9 @@ function go(tab) {
   document.getElementById('screen-'+tab).classList.add('active');
   document.getElementById('tab-'+tab).classList.add('active');
   window.scrollTo(0,0);
+  if (tab === 'send') {
+    renderBilling();
+  }
   if (tab === 'history') {
     if (!_historyUnlocked) {
       document.getElementById('hist-pw-overlay').style.display = 'flex';
@@ -1207,101 +1141,179 @@ function go(tab) {
   }
 }
 
-// ── EQUIPMENT ─────────────────────────────────────────────────────────────
-function onRangeChange() {
-  var r = document.getElementById('erange').value;
-  var sel = document.getElementById('etype');
-  sel.innerHTML = '<option value="">Select...</option>';
-  (TYPES[r]||[]).forEach(function(t){
-    var o = document.createElement('option'); o.value = o.textContent = t; sel.appendChild(o);
-  });
-  checklist = []; states = {};
+// ── EQUIPMENT (multi-unit) ────────────────────────────────────────────────
+function renderUnits() {
+  var c = document.getElementById('units-container');
+  c.innerHTML = units.map(function(u, i) {
+    var rangeOpts = ['B+S Black','K+','Rapid','SCooker'].map(function(r){
+      return '<option' + (u.erange===r?' selected':'') + '>' + r + '</option>';
+    }).join('');
+    var typeOpts = '<option value="">Select...</option>' + (TYPES[u.erange]||[]).map(function(t){
+      return '<option' + (u.etype===t?' selected':'') + '>' + t + '</option>';
+    }).join('');
 
-  // Populate model code suggestions for the selected range
-  var dl = document.getElementById('model-codes-list');
-  dl.innerHTML = '';
-  (MODEL_CODES[r]||[]).forEach(function(m){
-    var o = document.createElement('option');
-    o.value = m.code;
-    o.label = m.code + ' — ' + m.desc;
-    dl.appendChild(o);
-  });
+    var isSCooker = (u.erange === 'SCooker');
+    var preflightHTML;
+    if (isSCooker) {
+      function sel(val, opt){ return val===opt ? ' selected' : ''; }
+      preflightHTML =
+        '<div class="card-head"><div class="card-icon">⚡</div>' +
+          '<div><div class="card-title">Pre-Start Electrical Checks</div>' +
+          '<div class="card-sub">Confirm before starting service</div></div></div>' +
+        '<div class="card-body">' +
+          '<div class="field"><label class="lbl">Power On — Unit Starts Normally *</label>' +
+            '<select class="inp" id="p-static-'+i+'" onchange="saveUnitFields('+i+')">' +
+              '<option value="">Select...</option>' +
+              '<option'+sel(u.pStatic,'Yes — normal startup')+'>Yes — normal startup</option>' +
+              '<option'+sel(u.pStatic,'No — fails to start')+'>No — fails to start</option>' +
+              '<option'+sel(u.pStatic,'Partial — starts with errors')+'>Partial — starts with errors</option>' +
+            '</select></div>' +
+          '<div class="field"><label class="lbl">Display / Indicator Lights *</label>' +
+            '<select class="inp" id="p-dynamic-'+i+'" onchange="saveUnitFields('+i+')">' +
+              '<option value="">Select...</option>' +
+              '<option'+sel(u.pDynamic,'All lights normal')+'>All lights normal</option>' +
+              '<option'+sel(u.pDynamic,'Error code displayed')+'>Error code displayed</option>' +
+              '<option'+sel(u.pDynamic,'No display / blank screen')+'>No display / blank screen</option>' +
+              '<option'+sel(u.pDynamic,'Partial display')+'>Partial display</option>' +
+            '</select></div>' +
+          '<div class="field"><label class="lbl">Error Code on Display (if any)</label>' +
+            '<input class="inp" id="p-errorcode-'+i+'" type="text" value="'+(u.pErrorCode||'')+'" placeholder="e.g. E6, EA — leave blank if none" style="text-transform:uppercase; letter-spacing:1px;" onchange="saveUnitFields('+i+')"></div>' +
+        '</div>';
+    } else {
+      preflightHTML =
+        '<div class="card-head"><div class="card-icon">📊</div>' +
+          '<div><div class="card-title">Gas Pressure</div>' +
+          '<div class="card-sub">Record before starting</div></div></div>' +
+        '<div class="card-body">' +
+          '<div class="row2">' +
+            '<div class="field"><label class="lbl">Static (kPa) *</label>' +
+              '<input class="inp" id="p-static-'+i+'" type="number" step="0.01" value="'+(u.pStatic||'')+'" placeholder="e.g. 2.75" inputmode="decimal" onchange="saveUnitFields('+i+')"></div>' +
+            '<div class="field"><label class="lbl">Dynamic (kPa) *</label>' +
+              '<input class="inp" id="p-dynamic-'+i+'" type="number" step="0.01" value="'+(u.pDynamic||'')+'" placeholder="e.g. 2.50" inputmode="decimal" onchange="saveUnitFields('+i+')"></div>' +
+          '</div>' +
+        '</div>';
+    }
 
-  var gasField = document.getElementById('gas').parentElement;
-  var warrantyField = document.getElementById('warranty').parentElement;
+    var gasWarrantyRow;
+    if (isSCooker) {
+      gasWarrantyRow =
+        '<div class="row2">' +
+          '<div class="field" style="grid-column:1 / -1;"><label class="lbl">Warranty</label>' +
+            '<select class="inp" id="warranty-'+i+'" onchange="saveUnitFields('+i+')">' +
+              '<option value=""'+(u.warranty===''?' selected':'')+'>Unknown</option>' +
+              '<option'+(u.warranty==='In Warranty'?' selected':'')+'>In Warranty</option>' +
+              '<option'+(u.warranty==='Out of Warranty'?' selected':'')+'>Out of Warranty</option>' +
+            '</select></div>' +
+        '</div>';
+    } else {
+      gasWarrantyRow =
+        '<div class="row2">' +
+          '<div class="field"><label class="lbl">Gas Type</label>' +
+            '<select class="inp" id="gas-'+i+'" onchange="saveUnitFields('+i+')">' +
+              '<option value="ng"'+(u.gas==='ng'?' selected':'')+'>Natural Gas (NG)</option>' +
+              '<option value="lpg"'+(u.gas==='lpg'?' selected':'')+'>LPG</option>' +
+            '</select></div>' +
+          '<div class="field"><label class="lbl">Warranty</label>' +
+            '<select class="inp" id="warranty-'+i+'" onchange="saveUnitFields('+i+')">' +
+              '<option value=""'+(u.warranty===''?' selected':'')+'>Unknown</option>' +
+              '<option'+(u.warranty==='In Warranty'?' selected':'')+'>In Warranty</option>' +
+              '<option'+(u.warranty==='Out of Warranty'?' selected':'')+'>Out of Warranty</option>' +
+            '</select></div>' +
+        '</div>';
+    }
 
-  if (r === 'SCooker') {
-    // Hide gas type only; warranty still applies to SCooker
-    gasField.style.display = 'none';
-    warrantyField.style.display = '';
-    warrantyField.style.gridColumn = '1 / -1';
+    var header = units.length > 1
+      ? '<div class="card-head"><div class="card-icon">⚙️</div>' +
+          '<div><div class="card-title">Unit ' + (i+1) + '</div></div>' +
+          (units.length > 1 ? '<button onclick="removeUnit('+i+')" style="margin-left:auto;background:none;border:none;font-size:18px;color:var(--red);cursor:pointer;">✕</button>' : '') +
+        '</div>'
+      : '<div class="card-head"><div class="card-icon">⚙️</div><div><div class="card-title">Equipment</div></div></div>';
 
-    // Swap preflight card to electrical checks
-    document.getElementById('preflight-icon').textContent = '⚡';
-    document.getElementById('preflight-title').textContent = 'Pre-Start Electrical Checks';
-    document.getElementById('preflight-sub').textContent = 'Confirm before starting service';
-    document.getElementById('preflight-body').innerHTML =
-      '<div class="field">' +
-        '<label class="lbl">Power On — Unit Starts Normally *</label>' +
-        '<select class="inp" id="p-static">' +
-          '<option value="">Select...</option>' +
-          '<option>Yes — normal startup</option>' +
-          '<option>No — fails to start</option>' +
-          '<option>Partial — starts with errors</option>' +
-        '</select>' +
+    return '<div class="card">' + header +
+      '<div class="card-body">' +
+        '<div class="row2">' +
+          '<div class="field"><label class="lbl">Range *</label>' +
+            '<select class="inp" id="erange-'+i+'" onchange="onUnitRangeChange('+i+')">' +
+              '<option value="">Select...</option>' + rangeOpts +
+            '</select></div>' +
+          '<div class="field"><label class="lbl">Type *</label>' +
+            '<select class="inp" id="etype-'+i+'" onchange="onUnitTypeChange('+i+')">' + typeOpts + '</select></div>' +
+        '</div>' +
+        '<div class="row2">' +
+          '<div class="field"><label class="lbl">Model Code *</label>' +
+            '<input class="inp" id="model-'+i+'" type="text" value="'+(u.model||'')+'" placeholder="e.g. GRP-6" list="model-codes-list-'+i+'" autocomplete="off" onchange="saveUnitFields('+i+')"></div>' +
+            '<datalist id="model-codes-list-'+i+'"></datalist>' +
+          '<div class="field"><label class="lbl">Serial / Mfg Date *</label>' +
+            '<input class="inp" id="serial-'+i+'" type="text" value="'+(u.serial||'')+'" placeholder="Serial or date" onchange="saveUnitFields('+i+')"></div>' +
+        '</div>' +
+        gasWarrantyRow +
       '</div>' +
-      '<div class="field">' +
-        '<label class="lbl">Display / Indicator Lights *</label>' +
-        '<select class="inp" id="p-dynamic">' +
-          '<option value="">Select...</option>' +
-          '<option>All lights normal</option>' +
-          '<option>Error code displayed</option>' +
-          '<option>No display / blank screen</option>' +
-          '<option>Partial display</option>' +
-        '</select>' +
-      '</div>' +
-      '<div class="field">' +
-        '<label class="lbl">Error Code on Display (if any)</label>' +
-        '<input class="inp" id="p-errorcode" type="text" placeholder="e.g. E6, EA — leave blank if none" style="text-transform:uppercase; letter-spacing:1px;">' +
-      '</div>';
-  } else {
-    // Restore gas fields
-    gasField.style.display = '';
-    warrantyField.style.display = '';
-    warrantyField.style.gridColumn = '';
-    gasField.style.opacity = '1';
+    '</div>' +
+    '<div class="card">' + preflightHTML + '</div>';
+  }).join('');
 
-    document.getElementById('preflight-icon').textContent = '📊';
-    document.getElementById('preflight-title').textContent = 'Gas Pressure';
-    document.getElementById('preflight-sub').textContent = 'Record before starting';
-    document.getElementById('preflight-body').innerHTML =
-      '<div class="row2">' +
-        '<div class="field"><label class="lbl">Static (kPa) *</label>' +
-          '<input class="inp" id="p-static" type="number" step="0.01" placeholder="e.g. 2.75" inputmode="decimal"></div>' +
-        '<div class="field"><label class="lbl">Dynamic (kPa) *</label>' +
-          '<input class="inp" id="p-dynamic" type="number" step="0.01" placeholder="e.g. 2.50" inputmode="decimal"></div>' +
-      '</div>';
-  }
+  // Populate model code datalists for units with a range already selected
+  units.forEach(function(u, i){ populateModelCodes(i); });
 }
 
-function onTypeChange() {
-  var t = document.getElementById('etype').value;
-  checklist = CHECKLISTS[t] || [];
-  states = {};
-  checklist.forEach(function(_,i){ states[i] = null; });
+function addUnit() {
+  units.push(makeUnit());
+  renderUnits();
+  renderPhotoGrids();
+}
 
-  // Refine model code suggestions to match the selected type (within the current range)
-  var r = document.getElementById('erange').value;
-  var dl = document.getElementById('model-codes-list');
+function removeUnit(i) {
+  if (units.length <= 1) return;
+  units.splice(i, 1);
+  renderUnits();
+  renderPhotoGrids();
+}
+
+// Save free-text/select field values back into the units array (called on change)
+function saveUnitFields(i) {
+  var u = units[i];
+  function gv(id){ var el = document.getElementById(id); return el ? el.value : ''; }
+  u.model    = gv('model-'+i);
+  u.serial   = gv('serial-'+i);
+  u.gas      = gv('gas-'+i) || u.gas;
+  u.warranty = gv('warranty-'+i);
+  u.pStatic    = gv('p-static-'+i);
+  u.pDynamic   = gv('p-dynamic-'+i);
+  u.pErrorCode = gv('p-errorcode-'+i);
+}
+
+function populateModelCodes(i) {
+  var u = units[i];
+  var dl = document.getElementById('model-codes-list-'+i);
+  if (!dl) return;
   dl.innerHTML = '';
-  (MODEL_CODES[r]||[]).forEach(function(m){
-    if (!t || m.type === null || m.type === t) {
+  (MODEL_CODES[u.erange]||[]).forEach(function(m){
+    if (!u.etype || m.type === null || m.type === u.etype) {
       var o = document.createElement('option');
       o.value = m.code;
       o.label = m.code + ' — ' + m.desc;
       dl.appendChild(o);
     }
   });
+}
+
+function onUnitRangeChange(i) {
+  var u = units[i];
+  u.erange = document.getElementById('erange-'+i).value;
+  u.etype  = '';
+  u.model  = '';
+  u.serial = '';
+  u.pStatic = ''; u.pDynamic = ''; u.pErrorCode = '';
+  renderUnits();
+  renderPhotoGrids();
+}
+
+function onUnitTypeChange(i) {
+  var u = units[i];
+  u.etype = document.getElementById('etype-'+i).value;
+  saveUnitFields(i);
+  populateModelCodes(i);
+  renderPhotoGrids();
 }
 
 // ── CHECKLIST ─────────────────────────────────────────────────────────────
@@ -1317,12 +1329,17 @@ function validateJobFields() {
   check('address', 'Address');
   check('sdate',   'Service Date');
   check('tech',    'Technician');
-  check('erange',  'Equipment Range');
-  check('etype',   'Equipment Type');
-  check('model',   'Model Code');
-  check('serial',  'Serial / Mfg Date');
-  check('p-static',  'Static Pressure');
-  check('p-dynamic', 'Dynamic Pressure');
+
+  units.forEach(function(u, i) {
+    saveUnitFields(i);
+    var prefix = units.length > 1 ? 'Unit ' + (i+1) + ' — ' : '';
+    check('erange-'+i,  prefix + 'Equipment Range');
+    check('etype-'+i,   prefix + 'Equipment Type');
+    check('model-'+i,   prefix + 'Model Code');
+    check('serial-'+i,  prefix + 'Serial / Mfg Date');
+    check('p-static-'+i,  prefix + 'Static Pressure');
+    check('p-dynamic-'+i, prefix + 'Dynamic Pressure');
+  });
 
   if (missing.length) {
     alert('Please fill in the following before continuing:\n\n• ' + missing.join('\n• '));
@@ -1333,32 +1350,51 @@ function validateJobFields() {
 
 function startChecklist() {
   if (!validateJobFields()) return;
-  if (!checklist.length) onTypeChange();
+  // Build combined checklist tagged with unitIndex
+  checklist = [];
+  states = {};
+  units.forEach(function(u, ui) {
+    (CHECKLISTS[u.etype] || []).forEach(function(item){
+      checklist.push({ t: item.t, c: item.c, unitIndex: ui });
+    });
+  });
+  checklist.forEach(function(_,i){ states[i] = null; });
   renderChecklist();
   go('checklist');
 }
 
 function renderChecklist() {
-  var type  = document.getElementById('etype').value;
-  var range = document.getElementById('erange').value;
-  document.getElementById('cl-title').textContent = range + ' – ' + type;
   var wrap = document.getElementById('cl-items');
+  if (units.length === 1) {
+    document.getElementById('cl-title').textContent = units[0].erange + ' – ' + units[0].etype;
+  } else {
+    document.getElementById('cl-title').textContent = units.length + ' Units';
+  }
   if (!checklist.length) {
     wrap.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-txt">Complete Job tab first</div></div>';
     updateProgress(); return;
   }
-  var html = '<div class="card"><div>';
-  checklist.forEach(function(item, i) {
-    var s = states[i];
-    html += '<div class="cl-item">' +
-      '<div class="cl-label' + (item.c?' crit':'') + '">' + item.t + '</div>' +
-      '<div class="cl-btns">' +
-      '<button class="cl-btn' + (s==='pass'?' pass':'') + '" onclick="setState('+i+',\'pass\')">✓</button>' +
-      '<button class="cl-btn' + (s==='fail'?' fail':'') + '" onclick="setState('+i+',\'fail\')">✗</button>' +
-      '<button class="cl-btn' + (s==='na'?' na':'')     + '" onclick="setState('+i+',\'na\')">N/A</button>' +
-      '</div></div>';
+  var html = '';
+  units.forEach(function(u, ui) {
+    if (units.length > 1) {
+      html += '<div style="font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:0.6px;margin:14px 0 6px;padding:0 2px;">' +
+        'Unit ' + (ui+1) + ' — ' + u.erange + ' ' + u.etype + (u.model ? ' (' + u.model + ')' : '') +
+        '</div>';
+    }
+    html += '<div class="card"><div>';
+    checklist.forEach(function(item, i) {
+      if (item.unitIndex !== ui) return;
+      var s = states[i];
+      html += '<div class="cl-item">' +
+        '<div class="cl-label' + (item.c?' crit':'') + '">' + item.t + '</div>' +
+        '<div class="cl-btns">' +
+        '<button class="cl-btn' + (s==='pass'?' pass':'') + '" onclick="setState('+i+',\'pass\')">✓</button>' +
+        '<button class="cl-btn' + (s==='fail'?' fail':'') + '" onclick="setState('+i+',\'fail\')">✗</button>' +
+        '<button class="cl-btn' + (s==='na'?' na':'')     + '" onclick="setState('+i+',\'na\')">N/A</button>' +
+        '</div></div>';
+    });
+    html += '</div></div>';
   });
-  html += '</div></div>';
   wrap.innerHTML = html;
   updateProgress();
 }
@@ -1407,25 +1443,39 @@ function renderFlags() {
 }
 
 // ── PHOTOS ────────────────────────────────────────────────────────────────
-function renderPhotoGrid() {
-  var grid = document.getElementById('photo-grid');
-  grid.innerHTML = PHOTO_LABELS.map(function(label, i){
-    return '<label class="photo-slot" id="pslot-'+i+'">' +
-      (photos[i]
-        ? '<img src="'+photos[i]+'">' +
-          '<div class="photo-slot-overlay">' + label + '</div>'
-        : '<span style="font-size:22px;">📷</span><span style="font-size:10px;color:var(--muted);text-align:center;padding:0 6px;">' + label + '</span>'
-      ) +
-      '<input type="file" accept="image/*" capture="environment" style="display:none;" onchange="handlePhoto(event,'+i+')">' +
-      '</label>';
+function renderPhotoGrids() {
+  var c = document.getElementById('photos-container');
+  if (!c) return;
+  c.innerHTML = units.map(function(u, ui) {
+    var title = units.length > 1
+      ? 'Photos — Unit ' + (ui+1) + (u.erange ? ' (' + u.erange + (u.etype ? ' ' + u.etype : '') + ')' : '')
+      : 'Photos';
+    var grid = '<div class="photo-grid">' + PHOTO_LABELS.map(function(label, i){
+      var p = u.photos[i];
+      return '<label class="photo-slot" id="pslot-'+ui+'-'+i+'">' +
+        (p
+          ? '<img src="'+p+'">' +
+            '<div class="photo-slot-overlay">' + label + '</div>'
+          : '<span style="font-size:22px;">📷</span><span style="font-size:10px;color:var(--muted);text-align:center;padding:0 6px;">' + label + '</span>'
+        ) +
+        '<input type="file" accept="image/*" capture="environment" style="display:none;" onchange="handlePhoto(event,'+ui+','+i+')">' +
+        '</label>';
+    }).join('') + '</div>';
+
+    return '<div class="card">' +
+      '<div class="card-head"><div class="card-icon">📷</div>' +
+        '<div><div class="card-title">' + title + '</div>' +
+        '<div class="card-sub">Photos are included automatically in the email</div></div>' +
+      '</div>' +
+      '<div class="card-body">' + grid + '</div>' +
+    '</div>';
   }).join('');
 }
-renderPhotoGrid();
 
-function handlePhoto(e, i) {
+function handlePhoto(e, ui, i) {
   var file = e.target.files[0]; if (!file) return;
   var r = new FileReader();
-  r.onload = function(ev){ photos[i] = ev.target.result; renderPhotoGrid(); };
+  r.onload = function(ev){ units[ui].photos[i] = ev.target.result; renderPhotoGrids(); };
   r.readAsDataURL(file);
 }
 
@@ -1447,14 +1497,30 @@ function removeRecipient(i) {
 
 var DEFAULT_RECIPIENT = 'clientservices@bscommercialkitchens.com';
 
-function setBillingStatus(status) {
-  billingStatus = status;
-  var w = document.getElementById('bill-warranty');
-  var c = document.getElementById('bill-chargeable');
-  w.classList.remove('active-warranty');
-  c.classList.remove('active-chargeable');
-  if (status === 'warranty') w.classList.add('active-warranty');
-  if (status === 'chargeable') c.classList.add('active-chargeable');
+function renderBilling() {
+  var c = document.getElementById('billing-container');
+  c.innerHTML = units.map(function(u, i) {
+    var label = units.length > 1
+      ? 'Unit ' + (i+1) + ' — ' + (u.erange||'—') + ' ' + (u.etype||'') + (u.model ? ' (' + u.model + ')' : '')
+      : 'Is this job chargeable to the customer?';
+    return '<div class="card">' +
+      '<div class="card-head"><div class="card-icon">💳</div>' +
+        '<div><div class="card-title">' + (units.length > 1 ? 'Billing — Unit ' + (i+1) : 'Billing Status') + '</div>' +
+          '<div class="card-sub">' + label + '</div></div>' +
+      '</div>' +
+      '<div class="card-body">' +
+        '<div class="row2">' +
+          '<button type="button" class="btn-toggle' + (u.billing==='warranty'?' active-warranty':'') + '" onclick="setBillingStatus('+i+',\'warranty\')">🛡️ Warranty<br><span style="font-size:10px;font-weight:400;">No charge</span></button>' +
+          '<button type="button" class="btn-toggle' + (u.billing==='chargeable'?' active-chargeable':'') + '" onclick="setBillingStatus('+i+',\'chargeable\')">💵 Chargeable<br><span style="font-size:10px;font-weight:400;">Bill customer</span></button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function setBillingStatus(i, status) {
+  units[i].billing = status;
+  renderBilling();
 }
 
 function renderRecipients() {
@@ -1472,18 +1538,15 @@ function renderRecipients() {
   }).join('');
 }
 
-// Render default recipient on load
-document.addEventListener('DOMContentLoaded', function(){ renderRecipients(); });
+// Render default recipient and units on load
+document.addEventListener('DOMContentLoaded', function(){ renderRecipients(); renderUnits(); renderPhotoGrids(); });
 
 // ── BUILD REPORT ──────────────────────────────────────────────────────────
 function buildReport() {
-  function v(id){ return document.getElementById(id).value || '—'; }
+  function v(id){ var el = document.getElementById(id); return (el && el.value) ? el.value : '—'; }
   var d = v('sdate') !== '—'
     ? new Date(v('sdate')).toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'})
     : '—';
-  var gas = v('gas') === 'ng' ? 'Natural Gas (NG)' : 'LPG';
-  var pass=0, fail=0, na=0;
-  Object.values(states).forEach(function(s){ if(s==='pass')pass++; else if(s==='fail')fail++; else if(s==='na')na++; });
 
   var lines = [];
   lines.push('B+S COMMERCIAL KITCHENS — SERVICE REPORT');
@@ -1496,34 +1559,57 @@ function buildReport() {
   lines.push('Contact:         ' + v('contact') + '   ' + v('phone'));
   lines.push('Service Date:    ' + d);
   lines.push('Technician:      ' + v('tech'));
-  lines.push('');
-  lines.push('EQUIPMENT');
-  lines.push('─'.repeat(30));
-  lines.push('Range:           ' + v('erange'));
-  lines.push('Type:            ' + v('etype'));
-  lines.push('Model:           ' + v('model'));
-  lines.push('Serial / Mfg:    ' + v('serial'));
-  if (v('erange') !== 'SCooker') {
-    lines.push('Gas Type:        ' + gas);
-  }
-  lines.push('Warranty:        ' + (v('warranty') === '—' ? 'Unknown' : v('warranty')));
-  var range = v('erange');
-  if (range === 'SCooker') {
-    lines.push('Power On:        ' + v('p-static'));
-    lines.push('Display Lights:  ' + v('p-dynamic'));
-    var errCode = document.getElementById('p-errorcode') ? document.getElementById('p-errorcode').value : '';
-    if (errCode) lines.push('Error Code:      ' + errCode);
-  } else {
-    lines.push('Static Pressure: ' + v('p-static') + ' kPa');
-    lines.push('Dynamic Press.:  ' + v('p-dynamic') + ' kPa');
-  }
-  lines.push('');
-  lines.push('CHECKLIST  ✓ ' + pass + ' Pass  |  ✗ ' + fail + ' Fail  |  ' + na + ' N/A');
-  lines.push('─'.repeat(46));
-  checklist.forEach(function(item,i){
-    var s = states[i];
-    var lbl = s==='pass' ? '✓ Pass  ' : s==='fail' ? '✗ FAIL  ' : s==='na' ? 'N/A     ' : '—       ';
-    lines.push(lbl + ' ' + item.t);
+
+  units.forEach(function(u, ui) {
+    var unitLabel = units.length > 1 ? ' - UNIT ' + (ui+1) : '';
+    var gas = u.gas === 'ng' ? 'Natural Gas (NG)' : 'LPG';
+    var pass=0, fail=0, na=0;
+    checklist.forEach(function(item, i){
+      if (item.unitIndex !== ui) return;
+      var s = states[i];
+      if (s==='pass') pass++; else if (s==='fail') fail++; else if (s==='na') na++;
+    });
+
+    lines.push('');
+    lines.push('EQUIPMENT' + unitLabel);
+    lines.push('─'.repeat(30));
+    lines.push('Range:           ' + (u.erange || '—'));
+    lines.push('Type:            ' + (u.etype || '—'));
+    lines.push('Model:           ' + (u.model || '—'));
+    lines.push('Serial / Mfg:    ' + (u.serial || '—'));
+    if (u.erange !== 'SCooker') {
+      lines.push('Gas Type:        ' + gas);
+    }
+    lines.push('Warranty:        ' + (u.warranty || 'Unknown'));
+    if (u.erange === 'SCooker') {
+      lines.push('Power On:        ' + (u.pStatic || '—'));
+      lines.push('Display Lights:  ' + (u.pDynamic || '—'));
+      if (u.pErrorCode) lines.push('Error Code:      ' + u.pErrorCode);
+    } else {
+      lines.push('Static Pressure: ' + (u.pStatic || '—') + ' kPa');
+      lines.push('Dynamic Press.:  ' + (u.pDynamic || '—') + ' kPa');
+    }
+
+    lines.push('');
+    lines.push('CHECKLIST' + unitLabel + '  ✓ ' + pass + ' Pass  |  ✗ ' + fail + ' Fail  |  ' + na + ' N/A');
+    lines.push('─'.repeat(46));
+    checklist.forEach(function(item,i){
+      if (item.unitIndex !== ui) return;
+      var s = states[i];
+      var lbl = s==='pass' ? '✓ Pass  ' : s==='fail' ? '✗ FAIL  ' : s==='na' ? 'N/A     ' : '—       ';
+      lines.push(lbl + ' ' + item.t);
+    });
+
+    lines.push('');
+    lines.push('BILLING STATUS' + unitLabel);
+    lines.push('─'.repeat(30));
+    if (u.billing === 'warranty') {
+      lines.push('🛡️ WARRANTY — No charge to customer');
+    } else if (u.billing === 'chargeable') {
+      lines.push('💵 CHARGEABLE — Bill customer for this job');
+    } else {
+      lines.push('⚠ NOT SPECIFIED — please confirm billing status');
+    }
   });
 
   if (flags.length) {
@@ -1540,19 +1626,6 @@ function buildReport() {
     lines.push('─'.repeat(30));
     lines.push(comments);
   }
-
-  lines.push('');
-  lines.push('BILLING STATUS');
-  lines.push('─'.repeat(30));
-  if (billingStatus === 'warranty') {
-    lines.push('🛡️ WARRANTY — No charge to customer');
-  } else if (billingStatus === 'chargeable') {
-    lines.push('💵 CHARGEABLE — Bill customer for this job');
-  } else {
-    lines.push('⚠ NOT SPECIFIED — please confirm billing status');
-  }
-
-
 
   lines.push('');
   lines.push('─'.repeat(46));
@@ -1595,18 +1668,25 @@ function buildReportHTML() {
   }).join('');
 
   var photoHTML = '';
-  var hasPhotos = photos.some(function(p) { return p; });
-  if (hasPhotos) {
+  var anyPhotos = units.some(function(u){ return u.photos.some(function(p){ return p; }); });
+  if (anyPhotos) {
     photoHTML = '<div style="margin-top:24px;border-top:2px solid #1a3a5c;padding-top:16px;">' +
       '<h3 style="color:#1a3a5c;font-family:Arial,sans-serif;font-size:14px;margin:0 0 16px;">Service Photos</h3>';
-    photos.forEach(function(p, i) {
-      if (p) {
-        // p is already a data: URI (base64) — safe to embed directly
-        photoHTML += '<div style="margin-bottom:20px;">' +
-          '<div style="font-size:11px;font-weight:bold;color:#475569;font-family:Arial,sans-serif;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">' + photoLabels[i] + '</div>' +
-          '<img src="' + p + '" style="width:100%;max-width:560px;border-radius:8px;border:1px solid #e2e8f0;display:block;">' +
-          '</div>';
+    units.forEach(function(u, ui) {
+      var hasUnitPhotos = u.photos.some(function(p){ return p; });
+      if (!hasUnitPhotos) return;
+      if (units.length > 1) {
+        photoHTML += '<div style="font-size:12px;font-weight:800;color:#1a3a5c;font-family:Arial,sans-serif;margin:0 0 10px;text-transform:uppercase;letter-spacing:0.5px;">Unit ' + (ui+1) + (u.erange ? ' — ' + u.erange + (u.etype ? ' ' + u.etype : '') : '') + '</div>';
       }
+      u.photos.forEach(function(p, i) {
+        if (p) {
+          // p is already a data: URI (base64) — safe to embed directly
+          photoHTML += '<div style="margin-bottom:20px;">' +
+            '<div style="font-size:11px;font-weight:bold;color:#475569;font-family:Arial,sans-serif;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">' + photoLabels[i] + '</div>' +
+            '<img src="' + p + '" style="width:100%;max-width:560px;border-radius:8px;border:1px solid #e2e8f0;display:block;">' +
+            '</div>';
+        }
+      });
     });
     photoHTML += '</div>';
   }
@@ -1670,31 +1750,43 @@ function downloadCSVFromHistory() {
   var j = _historyJobForCSV;
   var csvText;
   if (j) {
-    // Build CSV from saved job data
     var rows = [
       ['Field','Value'],
       ['Business', j.biz||''],
       ['Address',  j.address||''],
       ['Contact',  j.contact||''],
       ['Phone',    j.phone||''],
-      ['Range',    j.erange||''],
-      ['Type',     j.type||''],
-      ['Model',    j.model||''],
-      ['Serial',   j.serial||''],
       ['Date',     j.date||''],
       ['Technician', j.tech||''],
-      ['Pass',     j.pass||0],
-      ['Fail',     j.fail||0],
-      ['Issues',   j.flagCount||0],
-      ['Sent To',  j.sent||''],
-      ['Billing Status', j.billing === 'warranty' ? 'Warranty - No charge'
-                       : j.billing === 'chargeable' ? 'Chargeable - Bill customer'
-                       : 'Not specified']
+      ['Sent To',  j.sent||'']
     ];
+    var jobUnits = j.units || [{
+      erange:j.erange, etype:j.type, model:j.model, serial:j.serial,
+      gas:j.gas, warranty:j.warranty, pStatic:j.pStatic, pDynamic:j.pDynamic,
+      billing:j.billing, pass:j.pass, fail:j.fail, na:0
+    }];
+    jobUnits.forEach(function(u, ui){
+      var prefix = jobUnits.length > 1 ? 'Unit ' + (ui+1) + ' — ' : '';
+      rows.push(['', '']);
+      rows.push([prefix + 'Range', u.erange||'']);
+      rows.push([prefix + 'Type', u.etype||'']);
+      rows.push([prefix + 'Model', u.model||'']);
+      rows.push([prefix + 'Serial', u.serial||'']);
+      rows.push([prefix + 'Pass', u.pass||0]);
+      rows.push([prefix + 'Fail', u.fail||0]);
+      rows.push([prefix + 'Billing Status', u.billing === 'warranty' ? 'Warranty - No charge'
+                       : u.billing === 'chargeable' ? 'Chargeable - Bill customer'
+                       : 'Not specified']);
+    });
+    rows.push(['', '']);
+    rows.push(['Issues Count', j.flagCount||0]);
     if (j.flags && j.flags.length) {
       rows.push(['','']);
       rows.push(['ISSUES','']);
-      j.flags.forEach(function(f){ rows.push([f, '']); });
+      j.flags.forEach(function(f){
+        var text = (f && typeof f === 'object') ? (f.text + (f.cat ? ' ('+f.cat+')' : '')) : String(f);
+        rows.push([text, '']);
+      });
     }
     csvText = rows.map(function(r){
       return r.map(function(c){ return '"' + String(c).replace(/"/g,'""') + '"'; }).join(',');
@@ -1716,8 +1808,12 @@ function downloadCSVFromHistory() {
 // ── SEND ─────────────────────────────────────────────────────────────────
 function validateRequiredFields() {
   if (!validateJobFields()) return false;
-  if (!billingStatus) {
-    alert('Please select a Billing Status (Warranty or Chargeable) before sending.');
+  var missingBilling = units.some(function(u){ return !u.billing; });
+  if (missingBilling) {
+    var msg = units.length > 1
+      ? 'Please select a Billing Status (Warranty or Chargeable) for each unit before sending.'
+      : 'Please select a Billing Status (Warranty or Chargeable) before sending.';
+    alert(msg);
     return false;
   }
   return true;
@@ -1733,7 +1829,7 @@ function sendReport() {
   var subject = 'B+S Service Report - ' + biz + ' - ' + date;
   var to      = recipients.join(',');
   var report  = buildReport();
-  var hasPhotos = photos.some(function(p){ return p; });
+  var hasPhotos = units.some(function(u){ return u.photos.some(function(p){ return p; }); });
 
   if (hasPhotos) {
     // Show the in-app report viewer with the self-contained HTML
@@ -1791,45 +1887,46 @@ function downloadCSV() {
     val = val.split('"').join('""');
     return val;
   }
-  function v(id){ return esc(document.getElementById(id).value); }
+  function v(id){ var el = document.getElementById(id); return esc(el ? el.value : ''); }
 
-  var pass=0, fail=0, na=0;
-  Object.values(states).forEach(function(s){
-    if(s==='pass') pass++; else if(s==='fail') fail++; else if(s==='na') na++;
-  });
-  var failItems = [];
-  checklist.forEach(function(item,i){ if(states[i]==='fail') failItems.push(item.t); });
   var nwIssues = flags.map(function(f){ return f.text + (f.cat ? ' ('+f.cat+')' : ''); }).join(' | ');
 
   var headers = [
     'Date','Business','Address','Contact','Phone','Technician',
-    'Range','Equipment Type','Model','Serial / Mfg Date',
+    'Unit','Range','Equipment Type','Model','Serial / Mfg Date',
     'Gas Type','Warranty','Static Pressure (kPa)','Dynamic Pressure (kPa)',
     'Total Items','Passed','Failed','N/A',
     'Failed Items','Non-Warranty Issues','Comments','Billing Status'
   ];
 
-  var gasVal = document.getElementById('gas').value === 'ng' ? 'Natural Gas (NG)' : 'LPG';
-  var warVal = document.getElementById('warranty').value || 'Unknown';
-  var billVal = billingStatus === 'warranty' ? 'Warranty - No charge'
-               : billingStatus === 'chargeable' ? 'Chargeable - Bill customer'
-               : 'Not specified';
-
-  var row = [
-    v('sdate'), v('biz'), v('address'), v('contact'), v('phone'), v('tech'),
-    v('erange'), v('etype'), v('model'), v('serial'),
-    gasVal, warVal,
-    v('p-static'), v('p-dynamic'),
-    checklist.length, pass, fail, na,
-    failItems.join(' | '),
-    nwIssues,
-    v('comments'),
-    billVal
-  ];
+  var rows = units.map(function(u, ui) {
+    var pass=0, fail=0, na=0, failItems=[];
+    checklist.forEach(function(item,i){
+      if (item.unitIndex !== ui) return;
+      var s = states[i];
+      if (s==='pass') pass++; else if (s==='fail') { fail++; failItems.push(item.t); } else if (s==='na') na++;
+    });
+    var gasVal = u.gas === 'ng' ? 'Natural Gas (NG)' : 'LPG';
+    var warVal = u.warranty || 'Unknown';
+    var billVal = u.billing === 'warranty' ? 'Warranty - No charge'
+                 : u.billing === 'chargeable' ? 'Chargeable - Bill customer'
+                 : 'Not specified';
+    return [
+      v('sdate'), v('biz'), v('address'), v('contact'), v('phone'), v('tech'),
+      (ui+1), esc(u.erange), esc(u.etype), esc(u.model), esc(u.serial),
+      gasVal, warVal,
+      esc(u.pStatic), esc(u.pDynamic),
+      checklist.filter(function(i){return i.unitIndex===ui;}).length, pass, fail, na,
+      failItems.join(' | '),
+      nwIssues,
+      v('comments'),
+      billVal
+    ];
+  });
 
   var csvHeader = headers.map(function(h){ return '"' + h + '"'; }).join(',');
-  var csvRow    = row.map(function(c){ return '"' + c + '"'; }).join(',');
-  var csv       = csvHeader + '\n' + csvRow;
+  var csvRows   = rows.map(function(row){ return row.map(function(c){ return '"' + c + '"'; }).join(','); });
+  var csv       = csvHeader + '\n' + csvRows.join('\n');
 
   var bizRaw = document.getElementById('biz').value || 'Report';
   var biz  = bizRaw.replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -1854,31 +1951,47 @@ function previewReport() {
 
 // ── HISTORY ───────────────────────────────────────────────────────────────
 function saveJob() {
-  var pass = Object.values(states).filter(function(v){ return v==='pass'; }).length;
-  var fail = Object.values(states).filter(function(v){ return v==='fail'; }).length;
+  var pass=0, fail=0;
+  Object.values(states).forEach(function(s){ if(s==='pass')pass++; else if(s==='fail')fail++; });
+
+  var unitSummaries = units.map(function(u, ui) {
+    var upass=0, ufail=0, una=0;
+    checklist.forEach(function(item,i){
+      if (item.unitIndex !== ui) return;
+      var s = states[i];
+      if (s==='pass') upass++; else if (s==='fail') ufail++; else if (s==='na') una++;
+    });
+    return {
+      erange: u.erange, etype: u.etype, model: u.model, serial: u.serial,
+      gas: u.gas, warranty: u.warranty,
+      pStatic: u.pStatic, pDynamic: u.pDynamic, pErrorCode: u.pErrorCode,
+      billing: u.billing,
+      pass: upass, fail: ufail, na: una,
+      photos: u.photos.slice()
+    };
+  });
+
   var job = {
     id: Date.now(),
     biz:       document.getElementById('biz').value,
-    address:   document.getElementById('addr').value,
+    address:   document.getElementById('address').value,
     contact:   document.getElementById('contact').value,
     phone:     document.getElementById('phone').value,
-    erange:    document.getElementById('erange').value,
-    type:      document.getElementById('etype').value,
-    model:     document.getElementById('model').value,
-    serial:    document.getElementById('serial').value,
     date:      document.getElementById('sdate').value,
     tech:      document.getElementById('tech').value,
+    units:     unitSummaries,
+    erange:    units.length === 1 ? units[0].erange : (units.length + ' units'),
+    type:      units.length === 1 ? units[0].etype  : units.map(function(u){return u.etype;}).join(', '),
     pass: pass, fail: fail,
     hasIssues: fail > 0 || flags.length > 0,
     flagCount: flags.length,
     sent:      recipients.join(', '),
-    billing:   billingStatus || 'unspecified',
+    billing:   units.length === 1 ? (units[0].billing || 'unspecified') : 'mixed',
     // Save full data for report replay
     reportText: buildReport(),
-    photos:    photos.slice(),
     flags:     flags.slice(),
     states:    JSON.parse(JSON.stringify(states)),
-    checklist: checklist.map(function(i){ return {t:i.t,c:i.c}; })
+    checklist: checklist.map(function(i){ return {t:i.t,c:i.c,unitIndex:i.unitIndex}; })
   };
   jobs.unshift(job);
   // Persist — strip photos if storage is getting full (photos are large)
@@ -1886,32 +1999,44 @@ function saveJob() {
     localStorage.setItem('bs_jobs_v2', JSON.stringify(jobs));
   } catch(e) {
     try {
-      var slim = jobs.map(function(j){ var s=Object.assign({},j); s.photos=[null,null,null,null,null]; return s; });
+      var slim = jobs.map(function(j){
+        var s = Object.assign({}, j);
+        s.units = (j.units||[]).map(function(u){ var uu = Object.assign({},u); uu.photos=[null,null,null,null,null]; return uu; });
+        return s;
+      });
       localStorage.setItem('bs_jobs_v2', JSON.stringify(slim));
     } catch(e2) {}
   }
 
-  // Post to Google Sheets (fire and forget)
+  // Post to Google Sheets (fire and forget) — one row per unit
   try {
-    var img = new Image();
-    img.src = SHEETS_URL + '?data=' + encodeURIComponent(JSON.stringify({
-      date:      job.date,
-      biz:       job.biz,
-      address:   job.address,
-      contact:   job.contact,
-      phone:     job.phone,
-      erange:    job.erange,
-      type:      job.type,
-      model:     job.model,
-      serial:    job.serial,
-      tech:      job.tech,
-      pass:      job.pass,
-      fail:      job.fail,
-      flagCount: job.flagCount,
-      flags:     job.flags,
-      sent:      job.sent,
-      billing:   job.billing
-    }));
+    units.forEach(function(u, ui) {
+      var upass=0, ufail=0;
+      checklist.forEach(function(item,i){
+        if (item.unitIndex !== ui) return;
+        var s = states[i];
+        if (s==='pass') upass++; else if (s==='fail') ufail++;
+      });
+      var img = new Image();
+      img.src = SHEETS_URL + '?data=' + encodeURIComponent(JSON.stringify({
+        date:      job.date,
+        biz:       job.biz,
+        address:   job.address,
+        contact:   job.contact,
+        phone:     job.phone,
+        erange:    u.erange,
+        type:      u.etype,
+        model:     u.model,
+        serial:    u.serial,
+        tech:      job.tech,
+        pass:      upass,
+        fail:      ufail,
+        flagCount: job.flagCount,
+        flags:     job.flags,
+        sent:      job.sent,
+        billing:   u.billing
+      }));
+    });
   } catch(e) {}
   renderHistory();
   go('history');
@@ -1961,27 +2086,8 @@ function openHistoryJob(idx) {
 var _historyJobForCSV = null;
 
 function buildReportHTMLFromJob(j) {
-  // Temporarily swap in this job's photos so buildReportHTML uses them
-  var savedPhotos = photos.slice();
-  if (j.photos) photos = j.photos.slice();
-  // Temporarily swap field values
-  var fields = ['biz','addr','contact','phone','erange','etype','model','serial','sdate','tech'];
-  var savedVals = {};
-  fields.forEach(function(id){
-    var el = document.getElementById(id);
-    if (el) { savedVals[id] = el.value; el.value = j[id.replace('addr','address').replace('etype','type').replace('sdate','date').replace('erange','erange')] || el.value; }
-  });
-  // Map field IDs to job keys
-  var map = {biz:'biz',addr:'address',contact:'contact',phone:'phone',erange:'erange',etype:'type',model:'model',serial:'serial',sdate:'date',tech:'tech'};
-  fields.forEach(function(id){ var el=document.getElementById(id); if(el && map[id] && j[map[id]]!==undefined) el.value=j[map[id]]||''; });
-
-  // Use saved reportText for the report body (avoids needing to restore full checklist state)
-  var html = buildReportHTMLWithText(j.reportText || '', j);
-
-  // Restore
-  photos = savedPhotos;
-  fields.forEach(function(id){ var el=document.getElementById(id); if(el) el.value=savedVals[id]||''; });
-  return html;
+  // Use saved reportText for the report body (already fully built at send time)
+  return buildReportHTMLWithText(j.reportText || '', j);
 }
 
 function buildReportHTMLWithText(reportText, j) {
@@ -1989,7 +2095,7 @@ function buildReportHTMLWithText(reportText, j) {
   var date = j.date || '—';
   var note = '';
   var photoLabels = PHOTO_LABELS;
-  var jobPhotos   = (j.photos || [null,null,null,null,null]);
+  var jobUnits = (j.units && j.units.length) ? j.units : [{ photos: (j.photos || [null,null,null,null,null]), erange:j.erange, etype:j.type }];
 
   var reportLines = reportText.split('\n').map(function(l) {
     if (l.indexOf('═') === 0 || l.indexOf('─') === 0)
@@ -2013,17 +2119,24 @@ function buildReportHTMLWithText(reportText, j) {
   }).join('');
 
   var photoHTML = '';
-  var hasPhotos = jobPhotos.some(function(p){ return p; });
+  var hasPhotos = jobUnits.some(function(u){ return (u.photos||[]).some(function(p){ return p; }); });
   if (hasPhotos) {
     photoHTML = '<div style="margin-top:24px;border-top:2px solid #1a3a5c;padding-top:16px;">' +
       '<h3 style="color:#1a3a5c;font-family:Arial,sans-serif;font-size:14px;margin:0 0 16px;">Service Photos</h3>';
-    jobPhotos.forEach(function(p, i) {
-      if (p) {
-        photoHTML += '<div style="margin-bottom:20px;">' +
-          '<div style="font-size:11px;font-weight:bold;color:#475569;font-family:Arial,sans-serif;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">' + photoLabels[i] + '</div>' +
-          '<img src="' + p + '" style="width:100%;max-width:560px;border-radius:8px;border:1px solid #e2e8f0;display:block;">' +
-          '</div>';
+    jobUnits.forEach(function(u, ui) {
+      var uPhotos = u.photos || [];
+      if (!uPhotos.some(function(p){return p;})) return;
+      if (jobUnits.length > 1) {
+        photoHTML += '<div style="font-size:12px;font-weight:800;color:#1a3a5c;font-family:Arial,sans-serif;margin:0 0 10px;text-transform:uppercase;letter-spacing:0.5px;">Unit ' + (ui+1) + (u.erange ? ' — ' + u.erange + (u.etype ? ' ' + u.etype : '') : '') + '</div>';
       }
+      uPhotos.forEach(function(p, i) {
+        if (p) {
+          photoHTML += '<div style="margin-bottom:20px;">' +
+            '<div style="font-size:11px;font-weight:bold;color:#475569;font-family:Arial,sans-serif;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">' + photoLabels[i] + '</div>' +
+            '<img src="' + p + '" style="width:100%;max-width:560px;border-radius:8px;border:1px solid #e2e8f0;display:block;">' +
+            '</div>';
+        }
+      });
     });
     photoHTML += '</div>';
   }
@@ -2060,7 +2173,7 @@ function renderHistoryList() {
   }
   c.innerHTML = '<div class="card"><div>' + jobs.map(function(j, idx){
     var d = j.date ? new Date(j.date).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : '—';
-    var hasPhotos = j.photos && j.photos.some(function(p){ return p; });
+    var hasPhotos = j.units && j.units.some(function(u){ return (u.photos||[]).some(function(p){ return p; }); });
     return '<div class="hist-item" onclick="openHistoryJob(' + idx + ')" style="cursor:pointer;">' +
       '<div class="hist-dot ' + (j.hasIssues?'bad':'ok') + '"></div>' +
       '<div style="flex:1">' +
@@ -2073,7 +2186,9 @@ function renderHistoryList() {
           (hasPhotos ? '<span class="badge" style="background:#e0f2fe;color:#0369a1;">📷 photos</span>' : '') +
           (j.billing === 'warranty' ? '<span class="badge" style="background:#f0fdf4;color:#16a34a;">🛡️ Warranty</span>'
             : j.billing === 'chargeable' ? '<span class="badge" style="background:#fff7ed;color:#ea580c;">💵 Chargeable</span>'
+            : j.billing === 'mixed' ? '<span class="badge" style="background:#fef9c3;color:#854d0e;">🛡️💵 Mixed billing</span>'
             : '<span class="badge" style="background:#f1f5f9;color:#64748b;">Billing not set</span>') +
+          (j.units && j.units.length > 1 ? '<span class="badge" style="background:#ede9fe;color:#7c3aed;">' + j.units.length + ' units</span>' : '') +
         '</div>' +
         '<div style="font-size:10px;color:var(--muted);margin-top:3px;">Sent to: ' + (j.sent||'—') + '</div>' +
       '</div>' +
