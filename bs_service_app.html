@@ -105,6 +105,9 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
 .btn-orange { background: var(--orange); color: white; box-shadow: 0 4px 14px rgba(249,115,22,0.35); }
 .btn-orange:active { transform: scale(0.98); }
 .btn-ghost  { background: white; color: var(--navy); border: 1.5px solid var(--navy); }
+.btn-toggle { padding: 14px 8px; border: 1.5px solid var(--mid); border-radius: var(--radius-sm); background: white; color: var(--text); font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; line-height: 1.5; transition: all 0.12s; }
+.btn-toggle.active-warranty { border-color: #16a34a; background: #f0fdf4; color: #16a34a; }
+.btn-toggle.active-chargeable { border-color: #f97316; background: #fff7ed; color: #f97316; }
 
 /* SEND */
 .add-email-row { display: flex; gap: 8px; }
@@ -264,12 +267,12 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
       <div class="field"><label class="lbl">Business Name *</label>
         <input class="inp" id="biz" type="text" placeholder="e.g. The Royal Hotel" autocomplete="organization"></div>
       <div class="row2">
-        <div class="field"><label class="lbl">Contact Person</label>
+        <div class="field"><label class="lbl">Contact Person *</label>
           <input class="inp" id="contact" type="text" placeholder="Name"></div>
-        <div class="field"><label class="lbl">Phone</label>
+        <div class="field"><label class="lbl">Phone *</label>
           <input class="inp" id="phone" type="tel" placeholder="04xx xxx xxx"></div>
       </div>
-      <div class="field"><label class="lbl">Address</label>
+      <div class="field"><label class="lbl">Address *</label>
         <input class="inp" id="address" type="text" placeholder="Street, Suburb, State"></div>
     </div>
   </div>
@@ -308,9 +311,10 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
           </select></div>
       </div>
       <div class="row2">
-        <div class="field"><label class="lbl">Model Code</label>
-          <input class="inp" id="model" type="text" placeholder="e.g. GRP-6"></div>
-        <div class="field"><label class="lbl">Serial / Mfg Date</label>
+        <div class="field"><label class="lbl">Model Code *</label>
+          <input class="inp" id="model" type="text" placeholder="e.g. GRP-6" list="model-codes-list" autocomplete="off"></div>
+          <datalist id="model-codes-list"></datalist>
+        <div class="field"><label class="lbl">Serial / Mfg Date *</label>
           <input class="inp" id="serial" type="text" placeholder="Serial or date"></div>
       </div>
       <div class="row2">
@@ -336,9 +340,9 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
     </div>
     <div class="card-body" id="preflight-body">
       <div class="row2">
-        <div class="field"><label class="lbl">Static (kPa)</label>
+        <div class="field"><label class="lbl">Static (kPa) *</label>
           <input class="inp" id="p-static" type="number" step="0.01" placeholder="e.g. 2.75" inputmode="decimal"></div>
-        <div class="field"><label class="lbl">Dynamic (kPa)</label>
+        <div class="field"><label class="lbl">Dynamic (kPa) *</label>
           <input class="inp" id="p-dynamic" type="number" step="0.01" placeholder="e.g. 2.50" inputmode="decimal"></div>
       </div>
     </div>
@@ -435,6 +439,19 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
   </div>
 
   <div class="card">
+    <div class="card-head"><div class="card-icon">💳</div>
+      <div><div class="card-title">Billing Status</div>
+        <div class="card-sub">Is this job chargeable to the customer?</div></div>
+    </div>
+    <div class="card-body">
+      <div class="row2">
+        <button type="button" class="btn-toggle" id="bill-warranty" onclick="setBillingStatus('warranty')">🛡️ Warranty<br><span style="font-size:10px;font-weight:400;">No charge</span></button>
+        <button type="button" class="btn-toggle" id="bill-chargeable" onclick="setBillingStatus('chargeable')">💵 Chargeable<br><span style="font-size:10px;font-weight:400;">Bill customer</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
     <div class="card-head"><div class="card-icon">📝</div>
       <div><div class="card-title">Message (optional)</div></div>
     </div>
@@ -494,7 +511,8 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
 
 <!-- HISTORY PASSWORD OVERLAY (outside screen div so it always renders) -->
 <div id="hist-pw-overlay" style="position:fixed;inset:0;background:rgba(15,36,64,0.97);z-index:500;display:none;align-items:center;justify-content:center;padding:24px;">
-  <div style="background:white;border-radius:16px;padding:28px 24px;width:100%;max-width:340px;text-align:center;">
+  <div style="background:white;border-radius:16px;padding:28px 24px;width:100%;max-width:340px;text-align:center;position:relative;">
+    <button onclick="cancelHistoryUnlock()" style="position:absolute;top:12px;left:12px;background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer;padding:4px 8px;line-height:1;">←</button>
     <div style="font-size:32px;margin-bottom:12px;">🔒</div>
     <div style="font-size:17px;font-weight:800;color:var(--navy);margin-bottom:6px;">History Access</div>
     <div style="font-size:13px;color:var(--muted);margin-bottom:20px;">Enter the History password to continue</div>
@@ -542,6 +560,234 @@ document.getElementById('hdr-date').textContent =
 document.getElementById('sdate').value = new Date().toISOString().split('T')[0];
 
 // ── DATA ──────────────────────────────────────────────────────────────────
+var MODEL_CODES = {
+  'B+S Black': [
+    // Boiling Tops
+    {code:'BT-SB2', type:'Boiling Top', desc:'Two Burner Boiling Top'},
+    {code:'BT-SB4', type:'Boiling Top', desc:'Four Burner Boiling Top'},
+    {code:'BT-SB6', type:'Boiling Top', desc:'Six Burner Boiling Top'},
+    {code:'BT-SB8', type:'Boiling Top', desc:'Eight Burner Boiling Top'},
+    {code:'BT-SB2BM', type:'Boiling Top', desc:'Two Burner Boiling Top Bench Mounted'},
+    {code:'BT-SB4BM', type:'Boiling Top', desc:'Four Burner Boiling Top Bench Mounted'},
+    {code:'BT-SB6BM', type:'Boiling Top', desc:'Six Burner Boiling Top Bench Mounted'},
+    {code:'BT-SB8BM', type:'Boiling Top', desc:'Eight Burner Boiling Top Bench Mounted'},
+    // Target Tops
+    {code:'TT-9', type:'Target Top', desc:'Target Top 900mm'},
+    {code:'OV-TT9', type:'Target Top', desc:'Oven with 900mm Target Top'},
+    // Combination Tops On Stand
+    {code:'BT-SB2-CBR3', type:'Char Broiler', desc:'Combination Two Open Burners & 300mm Char Broiler'},
+    {code:'BT-SB2-GRP3', type:'Grill Plate', desc:'Combination Two Open Burners & 300mm Grill Plate'},
+    {code:'BT-SB2-CBR6', type:'Char Broiler', desc:'Combination Two Open Burners & 600mm Char Broiler'},
+    {code:'BT-SB2-GRP6', type:'Grill Plate', desc:'Combination Two Open Burners & 600mm Grill Plate'},
+    {code:'BT-SB4-CBR3', type:'Char Broiler', desc:'Combination Four Open Burners & 300mm Char Broiler'},
+    {code:'BT-SB4-GRP3', type:'Grill Plate', desc:'Combination Four Open Burners & 300mm Grill Plate'},
+    {code:'BT-SB6-CBR3', type:'Char Broiler', desc:'Combination Six Open Burners & 300mm Char Broiler'},
+    {code:'BT-SB6-GRP3', type:'Grill Plate', desc:'Combination Six Open Burners & 300mm Grill Plate'},
+    {code:'BT-GRP6-CBR6', type:'Char Broiler', desc:'Combination 600mm Grill Plate & 600mm Char Broiler'},
+    {code:'BT-SB4-GRP6', type:'Grill Plate', desc:'Combination Four Open Burners & 600mm Grill Plate'},
+    // Combination Tops Bench Mounted
+    {code:'BT-SB2-CBR3BM', type:'Char Broiler', desc:'Combination Two Open Burners & 300mm Char Broiler Bench Mounted'},
+    {code:'BT-SB2-GRP3BM', type:'Grill Plate', desc:'Combination Two Open Burners & 300mm Grill Plate Bench Mounted'},
+    {code:'BT-SB2-CBR6BM', type:'Char Broiler', desc:'Combination Two Open Burners & 600mm Char Broiler Bench Mounted'},
+    {code:'BT-SB2-GRP6BM', type:'Grill Plate', desc:'Combination Two Open Burners & 600mm Grill Plate Bench Mounted'},
+    {code:'BT-SB4-CBR3BM', type:'Char Broiler', desc:'Combination Four Open Burners & 300mm Char Broiler Bench Mounted'},
+    {code:'BT-SB4-GRP3BM', type:'Grill Plate', desc:'Combination Four Open Burners & 300mm Grill Plate Bench Mounted'},
+    {code:'BT-SB6-CBR3BM', type:'Char Broiler', desc:'Combination Six Open Burners & 300mm Char Broiler Bench Mounted'},
+    {code:'BT-SB6-GRP3BM', type:'Grill Plate', desc:'Combination Six Open Burners & 300mm Grill Plate Bench Mounted'},
+    {code:'BT-GRP6-CBR6BM', type:'Char Broiler', desc:'Combination 600mm Grill Plate & 600mm Char Broiler Bench Mounted'},
+    {code:'BT-SB4-GRP6BM', type:'Grill Plate', desc:'Combination Four Open Burners & 600mm Grill Plate Bench Mounted'},
+    // Standard Ovens
+    {code:'OV-SB4', type:'Oven Range', desc:'Four Burner Oven'},
+    {code:'OV-SB6', type:'Oven Range', desc:'Six Burner Oven'},
+    {code:'OV-SB8', type:'Oven Range', desc:'Eight Burner Oven'},
+    // Combination Ovens
+    {code:'OV-SB2-CBR3', type:'Oven Range', desc:'Oven with Two Open Burners & 300mm Char Broiler'},
+    {code:'OV-SB2-GRP3', type:'Oven Range', desc:'Oven with Two Open Burners & 300mm Grill Plate'},
+    {code:'OV-GRP6', type:'Oven Range', desc:'Oven with 600mm Grill Plate'},
+    {code:'OV-SB4-CBR3', type:'Oven Range', desc:'Oven with Four Open Burners & 300mm Char Broiler'},
+    {code:'OV-SB4-GRP3', type:'Oven Range', desc:'Oven with Four Open Burners & 300mm Grill Plate'},
+    {code:'OV-GRP9', type:'Oven Range', desc:'Oven with 900mm Grill Plate'},
+    {code:'OV-SB6-GRP3', type:'Oven Range', desc:'Oven with Six Open Burners & 300mm Grill Plate'},
+    {code:'OV-SB6-CBR3', type:'Oven Range', desc:'Oven with Six Open Burners & 300mm Char Broiler'},
+    {code:'OV-SB4-GRP6', type:'Oven Range', desc:'Oven with Four Open Burners & 600mm Grill Plate'},
+    // Char Broilers
+    {code:'CBR-3', type:'Char Broiler', desc:'Char Broiler 300mm'},
+    {code:'CBR-6', type:'Char Broiler', desc:'Char Broiler 600mm'},
+    {code:'CBR-9', type:'Char Broiler', desc:'Char Broiler 900mm'},
+    {code:'CBR-12', type:'Char Broiler', desc:'Char Broiler 1200mm'},
+    {code:'CBR-3BM', type:'Char Broiler', desc:'Char Broiler 300mm Bench Mounted'},
+    {code:'CBR-6BM', type:'Char Broiler', desc:'Char Broiler 600mm Bench Mounted'},
+    {code:'CBR-9BM', type:'Char Broiler', desc:'Char Broiler 900mm Bench Mounted'},
+    {code:'CBR-12BM', type:'Char Broiler', desc:'Char Broiler 1200mm Bench Mounted'},
+    // Grill Plates
+    {code:'GRP-3', type:'Grill Plate', desc:'Grill Plate 300mm'},
+    {code:'GRP-6', type:'Grill Plate', desc:'Grill Plate 600mm'},
+    {code:'GRP-9', type:'Grill Plate', desc:'Grill Plate 900mm'},
+    {code:'GRP-12', type:'Grill Plate', desc:'Grill Plate 1200mm'},
+    {code:'GRP-3BM', type:'Grill Plate', desc:'Grill Plate 300mm Bench Mounted'},
+    {code:'GRP-6BM', type:'Grill Plate', desc:'Grill Plate 600mm Bench Mounted'},
+    {code:'GRP-9BM', type:'Grill Plate', desc:'Grill Plate 900mm Bench Mounted'},
+    {code:'GRP-12BM', type:'Grill Plate', desc:'Grill Plate 1200mm Bench Mounted'},
+    // Turbo Fryers
+    {code:'TF-451', type:'Turbo Fryer', desc:'Single Pan Turbo Fryer 450mm'},
+    {code:'TF-601', type:'Turbo Fryer', desc:'Single Pan Turbo Fryer 600mm'},
+    {code:'TF-451S', type:'Turbo Fryer', desc:'Split Pan Turbo Fryer 450mm'},
+    // Noodle/Pasta Cookers
+    {code:'NC-6', type:'Noodle / Pasta Cooker', desc:'Noodle Cooker 6 Baskets'},
+    {code:'PC-6', type:'Noodle / Pasta Cooker', desc:'Pasta Cooker 6 Baskets'},
+    {code:'NC-SW3', type:'Noodle / Pasta Cooker', desc:'Noodle Cooker with Soup Warmer insert (3 rec pots)'},
+    {code:'NC-4-SW-1', type:'Noodle / Pasta Cooker', desc:'Noodle Cooker with Soup Warmer insert (4 round + 1 rec pot)'},
+    {code:'NC-2-SW-2', type:'Noodle / Pasta Cooker', desc:'Noodle Cooker with Soup Warmer insert (2 round + 2 rec pots)'},
+    {code:'NC-CF', type:'Noodle / Pasta Cooker', desc:'Noodle Cooker with Cheung Fun insert'},
+    {code:'NC-9', type:'Noodle / Pasta Cooker', desc:'Noodle Cooker 9 Baskets'},
+    {code:'PC-9', type:'Noodle / Pasta Cooker', desc:'Pasta Cooker 9 Baskets'},
+    // Waterless Heat Exchange Steamers
+    {code:'YCJSF-1HE', type:'Waterless Steamer', desc:'Single Hole Waterless Heat Exchange Steamer'},
+    {code:'CFPSF-1HE', type:'Waterless Steamer', desc:'Single Hole Waterless Heat Exchange Steamer with Cheung Fun insert'},
+    // Waterless Pot Steamer
+    {code:'YCJSF-1', type:'Waterless Steamer', desc:'Single Hole Waterless Pot Steamer'},
+    // Waterless Stock Pot Cookers
+    {code:'UFWWSPD-1', type:'Waterless Stock Pot', desc:'Single Hole Deluxe Waterless Stock Pot'},
+    {code:'UFWWSPD-2', type:'Waterless Stock Pot', desc:'Two Hole Deluxe Waterless Stock Pot'},
+    // Waterless Hi Pac Wok Tables
+    {code:'CCF-HP1S', type:'Waterless Wok Table', desc:'Single Hole Hi Pac Wok to suit B+S Black Range Profile'},
+    {code:'CCF-HP1', type:'Waterless Wok Table', desc:'Single Hole Hi Pac Wok'},
+    {code:'CCF-HP1+1R', type:'Waterless Wok Table', desc:'Single Hole Hi Pac Wok with Right Rear Pot & Side Prep Table'},
+    {code:'CCF-HP1+1L', type:'Waterless Wok Table', desc:'Single Hole Hi Pac Wok with Left Rear Pot & Side Prep Table'},
+    {code:'CCF-HP2+1', type:'Waterless Wok Table', desc:'Double Hole Hi Pac Wok with Centre Pot and Prep Table'},
+    // Waterless Wok Tables
+    {code:'UFWWD-1', type:'Waterless Wok Table', desc:'Single Hole Deluxe Waterless Wok Table'},
+    {code:'UFWWD-2', type:'Waterless Wok Table', desc:'Two Hole Deluxe Waterless Wok Table'},
+    {code:'UFWWD-3', type:'Waterless Wok Table', desc:'Three Hole Deluxe Waterless Wok Table'},
+    {code:'BAWBT-SB2L', type:'Waterless Wok Table', desc:'Two Burner Boiling Top LHS Wok Attachment'},
+    {code:'BAWBT-SB2R', type:'Waterless Wok Table', desc:'Two Burner Boiling Top RHS Wok Attachment'}
+  ],
+
+  'K+': [
+    // Boiling Tops
+    {code:'KBT-SB2', type:'Boiling Top', desc:'Two Burner Boiling Top On Stand'},
+    {code:'KBT-SB4', type:'Boiling Top', desc:'Four Burner Boiling Top On Stand'},
+    {code:'KBT-SB6', type:'Boiling Top', desc:'Six Burner Boiling Top On Stand'},
+    {code:'KBT-SB8', type:'Boiling Top', desc:'Eight Burner Boiling Top On Stand'},
+    // Standard Ovens
+    {code:'KOV-SB4', type:'Oven Range', desc:'Four Burner Oven'},
+    {code:'KOV-SB6', type:'Oven Range', desc:'Six Burner Oven'},
+    {code:'KOV-SB8', type:'Oven Range', desc:'Eight Burner Oven'},
+    // Char Broilers
+    {code:'KCBR-3', type:'Char Broiler', desc:'300mm Char Broiler On Stand'},
+    {code:'KCBR-6', type:'Char Broiler', desc:'600mm Char Broiler On Stand'},
+    {code:'KCBR-9', type:'Char Broiler', desc:'900mm Char Broiler On Stand'},
+    {code:'KCBR-12', type:'Char Broiler', desc:'1200mm Char Broiler On Stand'},
+    // Grill Plates
+    {code:'KGRP-3', type:'Grill Plate', desc:'300mm Grill Plate On Stand'},
+    {code:'KGRP-6', type:'Grill Plate', desc:'600mm Grill Plate On Stand'},
+    {code:'KGRP-9', type:'Grill Plate', desc:'900mm Grill Plate On Stand'},
+    {code:'KGRP-12', type:'Grill Plate', desc:'1200mm Grill Plate On Stand'},
+    // Noodle/Pasta Cookers + Soup Warmers
+    {code:'KNC-6', type:'Noodle / Pasta Cooker', desc:'Six Basket Noodle Cooker'},
+    {code:'KPC-6', type:'Noodle / Pasta Cooker', desc:'Six Basket Pasta Cooker'},
+    {code:'KNC-SW3', type:'Noodle / Pasta Cooker', desc:'Three Pot Soup Warmer'},
+    {code:'KNC-9', type:'Noodle / Pasta Cooker', desc:'Nine Basket Noodle Cooker'},
+    {code:'KPC-9', type:'Noodle / Pasta Cooker', desc:'Nine Basket Pasta Cooker'},
+    {code:'KNC-CF', type:'Noodle / Pasta Cooker', desc:'Noodle Cooker with Cheung Fun insert'},
+    // Turbo Fryers
+    {code:'KTF-451', type:'Turbo Fryer', desc:'Single Pan Turbo Fryer 450mm'},
+    {code:'KTF-451S', type:'Turbo Fryer', desc:'Split Pan Turbo Fryer 450mm'},
+    {code:'KTF-601', type:'Turbo Fryer', desc:'Single Pan Turbo Fryer 600mm'},
+    // Waterless Heat Exchange Steamer
+    {code:'KYCJSF-1HE', type:'Waterless Steamer', desc:'Single Hole Waterless Heat Exchange Steamer'},
+    // Waterless Pot Steamer
+    {code:'KYCJSF-1', type:'Waterless Steamer', desc:'Single Hole Waterless Pot Steamer'},
+    // Waterless Stock Pot Cooker
+    {code:'UFWWSPK-1', type:'Waterless Stock Pot', desc:'Single Hole Deluxe Stock Pot'},
+    // Standalone Stock Pot Cookers
+    {code:'CSPK-1', type:'Waterless Stock Pot', desc:'Standalone Stock Pot Cooker'},
+    // Waterless Wok Tables
+    {code:'UFWWK-1', type:'Waterless Wok Table', desc:'Single Hole Deluxe Waterless Wok Table'},
+    {code:'UFWWK-2', type:'Waterless Wok Table', desc:'Two Hole Deluxe Waterless Wok Table'},
+    {code:'UFWWK-3', type:'Waterless Wok Table', desc:'Three Hole Deluxe Waterless Wok Table'},
+    {code:'KAWBT-SB2L', type:'Waterless Wok Table', desc:'Two Burner Boiling Top LHS Wok Attachment'},
+    {code:'KAWBT-SB2R', type:'Waterless Wok Table', desc:'Two Burner Boiling Top RHS Wok Attachment'},
+    // Duck Oven
+    {code:'DR-800', type:'Duck Oven', desc:'Duck Oven 800mm'}
+  ],
+
+  'Rapid': [
+    // Gas Fryers
+    {code:'RF-1', type:'Gas Fryer', desc:'Single Pan Rapid Gas Fryer'},
+    {code:'RF-400', type:'Gas Fryer', desc:'Single Pan Two Basket Rapid Gas Fryer'},
+    {code:'RF-600', type:'Gas Fryer', desc:'Single Pan Three Basket Rapid Gas Fryer'},
+    // Electric Fryers
+    {code:'RF-1E', type:'Electric Fryer', desc:'Single Pan Two Basket Rapid Electric Fryer'},
+    {code:'RF-2E', type:'Electric Fryer', desc:'Two Pan Four Basket Rapid Electric Fryer'},
+    {code:'RF-3E', type:'Electric Fryer', desc:'Three Pan Six Basket Rapid Electric Fryer'}
+  ],
+
+  'SCooker': [
+    // Induction Boiling Tops
+    {code:'HLBZ2N-C7', type:'Induction Boiling Top', desc:'Induction Full Length Glass Two-Zone Boiling Top'},
+    {code:'HLBZ4N-C14', type:'Induction Boiling Top', desc:'Induction Full Length Glass Four-Zone Boiling Top'},
+    {code:'HLBZ6N-C21', type:'Induction Boiling Top', desc:'Induction Full Length Glass Six-Zone Boiling Top'},
+    {code:'HLBZJ4N-C19', type:'Induction Boiling Top With Oven', desc:'Induction Full Length Glass Four-Zone Boiling Top With Oven'},
+    {code:'HLBZJ6N-C26', type:'Induction Boiling Top With Oven', desc:'Induction Full Length Glass Six-Zone Boiling Top With Oven'},
+    // Induction Griddles
+    {code:'HLKP4N-C6', type:'Induction Griddle (Grooved)', desc:'Induction Grooved Griddle Plate 400mm'},
+    {code:'HLKP6N-C6', type:'Induction Griddle (Grooved)', desc:'Induction Grooved Griddle Plate 600mm'},
+    {code:'HLKP8N-C9', type:'Induction Griddle (Grooved)', desc:'Induction Grooved Griddle Plate 800mm'},
+    {code:'HLKP9N-C9', type:'Induction Griddle (Grooved)', desc:'Induction Grooved Griddle Plate 900mm'},
+    {code:'HLKP12N-C12', type:'Induction Griddle (Grooved)', desc:'Induction Grooved Griddle Plate 1200mm'},
+    {code:'HLPP4N-C6', type:'Induction Griddle (Smooth)', desc:'Induction Smooth Griddle Plate 400mm'},
+    {code:'HLPP6N-C6', type:'Induction Griddle (Smooth)', desc:'Induction Smooth Griddle Plate 600mm'},
+    {code:'HLPP8N-C9', type:'Induction Griddle (Smooth)', desc:'Induction Smooth Griddle Plate 800mm'},
+    {code:'HLPP9N-C9', type:'Induction Griddle (Smooth)', desc:'Induction Smooth Griddle Plate 900mm'},
+    {code:'HLPP12N-C12', type:'Induction Griddle (Smooth)', desc:'Induction Smooth Griddle Plate 1200mm'},
+    // Induction Fryer
+    {code:'HLYZDN-C12', type:'Induction Fryer', desc:'Induction Single Pan Two Basket Fryer'},
+    // Induction Pasta/Noodle Cookers and Bain Marie
+    {code:'HLYFDN-C12', type:'Induction Pasta Cooker', desc:'Induction Single Pan Six Basket Pasta Cooker'},
+    {code:'HLZMDN6-C12', type:'Induction Noodle Cooker', desc:'Induction Single Pan Six Basket Noodle Cooker'},
+    {code:'HLBWDN-B3', type:'Induction Bain Marie', desc:'Induction Bain Marie 2 Pan Inserts'},
+    // Induction Woks
+    {code:'HLXCDN-C8', type:'Induction Wok', desc:'Induction Single Wok – Standard Ring 600mm'},
+    {code:'HLXCDN-C12', type:'Induction Wok', desc:'Induction Single Wok – Standard Ring 800mm'},
+    {code:'HLXC2N-C16', type:'Induction Wok', desc:'Induction Double Wok – Standard Ring 16kW'},
+    {code:'HLXC2N-C24', type:'Induction Wok', desc:'Induction Double Wok – Standard Ring 24kW'},
+    {code:'HLXCDQ7-C12', type:'Induction Wok', desc:'Induction Single Wok – Large Ring'},
+    {code:'HLXC2Q-C24', type:'Induction Wok', desc:'Induction Double Wok – Large Ring'},
+    {code:'HLXCDQ1-C14', type:'Induction Wok', desc:'Induction Single Wok With Rear Warming Pot – Large Ring'},
+    // Induction Pan Noodle Cooker
+    {code:'HLZMDN5G-C10', type:'Induction Pan Noodle Cooker', desc:'Induction Pan Noodle Cooker 5 Baskets'},
+    // Induction Steamer
+    {code:'HLZLDN-C20', type:'Induction Steamer', desc:'Induction Steamer'},
+    // Induction Multi-Functional Cooker
+    {code:'HLDG8N-C8', type:'Induction Multi-Functional Cooker', desc:'Induction Multi-Functional Cooker'},
+    // Induction Stock Pot Cooker
+    {code:'HLTLD-C12', type:'Induction Stock Pot', desc:'Induction Stock Pot Cooker With 600mm Stainless Steel Pot'},
+    // Electric Infrared Boiling Tops
+    {code:'DLGB2N-C4D8', type:'Electric Infrared Top', desc:'Electric Infrared Two-Zone Boiling Top'},
+    {code:'DLGB4N-C9D6', type:'Electric Infrared Top', desc:'Electric Infrared Four-Zone Boiling Top'},
+    {code:'DLGB6N-C14D4', type:'Electric Infrared Top', desc:'Electric Infrared Six-Zone Boiling Top'},
+    {code:'DLGBJ4N-C14D6', type:'Electric Infrared Top With Oven', desc:'Electric Infrared Four-Zone Boiling Top With Oven'},
+    {code:'DLGBJ6N-C19D4', type:'Electric Infrared Top With Oven', desc:'Electric Infrared Six-Zone Boiling Top With Oven'},
+    // Electric Solid Plate Boiling Tops
+    {code:'DLZS2N-C4D6', type:'Electric Boiling Top', desc:'Electric Solid Plate Two-Zone Boiling Top'},
+    {code:'DLZS4N-C9D2', type:'Electric Boiling Top', desc:'Electric Solid Plate Four-Zone Boiling Top'},
+    {code:'DLZS6N-C13D8', type:'Electric Boiling Top', desc:'Electric Solid Plate Six-Zone Boiling Top'},
+    {code:'DLZSJ4N-C14D2', type:'Electric Boiling Top With Oven', desc:'Electric Solid Plate Four-Zone Boiling Top With Oven'},
+    {code:'DLZSJ6N-C18D8', type:'Electric Boiling Top With Oven', desc:'Electric Solid Plate Six-Zone Boiling Top With Oven'},
+    // Electric Griddles
+    {code:'DLPP4N-C4D5', type:'Electric Griddle', desc:'Electric Smooth Griddle Plate 400mm'},
+    {code:'DLPP8N-C9', type:'Electric Griddle', desc:'Electric Smooth Griddle Plate 800mm'},
+    {code:'DLPP12N-C13D5', type:'Electric Griddle', desc:'Electric Smooth Griddle Plate 1200mm'},
+    // Electric Fryer
+    {code:'DLYZDN2-C9', type:'Electric Fryer (SCooker)', desc:'Electric Single Pan Two Basket Fryer'},
+    // Electric Noodle/Pasta Cookers
+    {code:'DLYFDN6-C12', type:'Electric Pasta Cooker', desc:'Electric Single Pan Six Basket Pasta Cooker'},
+    {code:'DLZMDN6-C12', type:'Electric Noodle Cooker', desc:'Electric Single Pan Six Basket Noodle Cooker'}
+  ]
+};
+
+
 var TYPES = {
   'B+S Black': ['Grill Plate','Oven Range','Boiling Top','Char Broiler','Turbo Fryer',
     'Noodle / Pasta Cooker','Waterless Wok Table','Waterless Stock Pot','Waterless Steamer','Target Top'],
@@ -931,6 +1177,7 @@ var CHECKLISTS = {
 
 // ── STATE ─────────────────────────────────────────────────────────────────
 var checklist = [], states = {}, flags = [], recipients = ['clientservices@bscommercialkitchens.com'], jobs = [];
+var billingStatus = null; // 'warranty' or 'chargeable'
 var PHOTO_LABELS = ['Before service','After service','Non-warranty issue','Gas connections','Other'];
 var photos = [null,null,null,null,null];
 
@@ -970,13 +1217,24 @@ function onRangeChange() {
   });
   checklist = []; states = {};
 
+  // Populate model code suggestions for the selected range
+  var dl = document.getElementById('model-codes-list');
+  dl.innerHTML = '';
+  (MODEL_CODES[r]||[]).forEach(function(m){
+    var o = document.createElement('option');
+    o.value = m.code;
+    o.label = m.code + ' — ' + m.desc;
+    dl.appendChild(o);
+  });
+
   var gasField = document.getElementById('gas').parentElement;
   var warrantyField = document.getElementById('warranty').parentElement;
 
   if (r === 'SCooker') {
-    // Hide gas type, show N/A for warranty label change
+    // Hide gas type only; warranty still applies to SCooker
     gasField.style.display = 'none';
-    warrantyField.style.display = 'none';
+    warrantyField.style.display = '';
+    warrantyField.style.gridColumn = '1 / -1';
 
     // Swap preflight card to electrical checks
     document.getElementById('preflight-icon').textContent = '⚡';
@@ -984,7 +1242,7 @@ function onRangeChange() {
     document.getElementById('preflight-sub').textContent = 'Confirm before starting service';
     document.getElementById('preflight-body').innerHTML =
       '<div class="field">' +
-        '<label class="lbl">Power On — Unit Starts Normally</label>' +
+        '<label class="lbl">Power On — Unit Starts Normally *</label>' +
         '<select class="inp" id="p-static">' +
           '<option value="">Select...</option>' +
           '<option>Yes — normal startup</option>' +
@@ -993,7 +1251,7 @@ function onRangeChange() {
         '</select>' +
       '</div>' +
       '<div class="field">' +
-        '<label class="lbl">Display / Indicator Lights</label>' +
+        '<label class="lbl">Display / Indicator Lights *</label>' +
         '<select class="inp" id="p-dynamic">' +
           '<option value="">Select...</option>' +
           '<option>All lights normal</option>' +
@@ -1010,6 +1268,7 @@ function onRangeChange() {
     // Restore gas fields
     gasField.style.display = '';
     warrantyField.style.display = '';
+    warrantyField.style.gridColumn = '';
     gasField.style.opacity = '1';
 
     document.getElementById('preflight-icon').textContent = '📊';
@@ -1017,9 +1276,9 @@ function onRangeChange() {
     document.getElementById('preflight-sub').textContent = 'Record before starting';
     document.getElementById('preflight-body').innerHTML =
       '<div class="row2">' +
-        '<div class="field"><label class="lbl">Static (kPa)</label>' +
+        '<div class="field"><label class="lbl">Static (kPa) *</label>' +
           '<input class="inp" id="p-static" type="number" step="0.01" placeholder="e.g. 2.75" inputmode="decimal"></div>' +
-        '<div class="field"><label class="lbl">Dynamic (kPa)</label>' +
+        '<div class="field"><label class="lbl">Dynamic (kPa) *</label>' +
           '<input class="inp" id="p-dynamic" type="number" step="0.01" placeholder="e.g. 2.50" inputmode="decimal"></div>' +
       '</div>';
   }
@@ -1030,13 +1289,50 @@ function onTypeChange() {
   checklist = CHECKLISTS[t] || [];
   states = {};
   checklist.forEach(function(_,i){ states[i] = null; });
+
+  // Refine model code suggestions to match the selected type (within the current range)
+  var r = document.getElementById('erange').value;
+  var dl = document.getElementById('model-codes-list');
+  dl.innerHTML = '';
+  (MODEL_CODES[r]||[]).forEach(function(m){
+    if (!t || m.type === null || m.type === t) {
+      var o = document.createElement('option');
+      o.value = m.code;
+      o.label = m.code + ' — ' + m.desc;
+      dl.appendChild(o);
+    }
+  });
 }
 
 // ── CHECKLIST ─────────────────────────────────────────────────────────────
+function validateJobFields() {
+  var missing = [];
+  function check(id, label) {
+    var el = document.getElementById(id);
+    if (!el || !el.value || !el.value.toString().trim()) missing.push(label);
+  }
+  check('biz',     'Business Name');
+  check('contact', 'Contact Person');
+  check('phone',   'Phone');
+  check('address', 'Address');
+  check('sdate',   'Service Date');
+  check('tech',    'Technician');
+  check('erange',  'Equipment Range');
+  check('etype',   'Equipment Type');
+  check('model',   'Model Code');
+  check('serial',  'Serial / Mfg Date');
+  check('p-static',  'Static Pressure');
+  check('p-dynamic', 'Dynamic Pressure');
+
+  if (missing.length) {
+    alert('Please fill in the following before continuing:\n\n• ' + missing.join('\n• '));
+    return false;
+  }
+  return true;
+}
+
 function startChecklist() {
-  if (!document.getElementById('biz').value.trim()) { alert('Please enter the business name.'); return; }
-  if (!document.getElementById('erange').value)     { alert('Please select the equipment range.'); return; }
-  if (!document.getElementById('etype').value)      { alert('Please select the equipment type.'); return; }
+  if (!validateJobFields()) return;
   if (!checklist.length) onTypeChange();
   renderChecklist();
   go('checklist');
@@ -1151,6 +1447,16 @@ function removeRecipient(i) {
 
 var DEFAULT_RECIPIENT = 'clientservices@bscommercialkitchens.com';
 
+function setBillingStatus(status) {
+  billingStatus = status;
+  var w = document.getElementById('bill-warranty');
+  var c = document.getElementById('bill-chargeable');
+  w.classList.remove('active-warranty');
+  c.classList.remove('active-chargeable');
+  if (status === 'warranty') w.classList.add('active-warranty');
+  if (status === 'chargeable') c.classList.add('active-chargeable');
+}
+
 function renderRecipients() {
   var c = document.getElementById('recipients-list');
   if (!recipients.length) { c.innerHTML = ''; return; }
@@ -1200,9 +1506,7 @@ function buildReport() {
   if (v('erange') !== 'SCooker') {
     lines.push('Gas Type:        ' + gas);
   }
-  if (v('erange') !== 'SCooker') {
-    lines.push('Warranty:        ' + (v('warranty') === '—' ? 'Unknown' : v('warranty')));
-  }
+  lines.push('Warranty:        ' + (v('warranty') === '—' ? 'Unknown' : v('warranty')));
   var range = v('erange');
   if (range === 'SCooker') {
     lines.push('Power On:        ' + v('p-static'));
@@ -1235,6 +1539,17 @@ function buildReport() {
     lines.push('COMMENTS & RECOMMENDATIONS');
     lines.push('─'.repeat(30));
     lines.push(comments);
+  }
+
+  lines.push('');
+  lines.push('BILLING STATUS');
+  lines.push('─'.repeat(30));
+  if (billingStatus === 'warranty') {
+    lines.push('🛡️ WARRANTY — No charge to customer');
+  } else if (billingStatus === 'chargeable') {
+    lines.push('💵 CHARGEABLE — Bill customer for this job');
+  } else {
+    lines.push('⚠ NOT SPECIFIED — please confirm billing status');
   }
 
 
@@ -1271,6 +1586,10 @@ function buildReportHTML() {
       return '<div style="color:#dc2626;font-weight:bold;font-size:12px;font-family:monospace;padding:2px 0;">' + l + '</div>';
     if (l.indexOf('⚠') === 0)
       return '<div style="color:#d97706;font-weight:bold;font-size:12px;font-family:Arial,sans-serif;padding:3px 0;">' + l + '</div>';
+    if (l.indexOf('🛡️') === 0)
+      return '<div style="background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;font-weight:bold;font-size:13px;font-family:Arial,sans-serif;padding:8px 12px;border-radius:6px;margin:4px 0;">' + l + '</div>';
+    if (l.indexOf('💵') === 0)
+      return '<div style="background:#fff7ed;border:1px solid #fed7aa;color:#ea580c;font-weight:bold;font-size:13px;font-family:Arial,sans-serif;padding:8px 12px;border-radius:6px;margin:4px 0;">' + l + '</div>';
     if (l.trim() === '') return '<div style="height:6px;"></div>';
     return '<div style="font-size:12px;font-family:monospace;color:#1e293b;padding:1px 0;">' + l + '</div>';
   }).join('');
@@ -1367,7 +1686,10 @@ function downloadCSVFromHistory() {
       ['Pass',     j.pass||0],
       ['Fail',     j.fail||0],
       ['Issues',   j.flagCount||0],
-      ['Sent To',  j.sent||'']
+      ['Sent To',  j.sent||''],
+      ['Billing Status', j.billing === 'warranty' ? 'Warranty - No charge'
+                       : j.billing === 'chargeable' ? 'Chargeable - Bill customer'
+                       : 'Not specified']
     ];
     if (j.flags && j.flags.length) {
       rows.push(['','']);
@@ -1392,7 +1714,17 @@ function downloadCSVFromHistory() {
 }
 
 // ── SEND ─────────────────────────────────────────────────────────────────
+function validateRequiredFields() {
+  if (!validateJobFields()) return false;
+  if (!billingStatus) {
+    alert('Please select a Billing Status (Warranty or Chargeable) before sending.');
+    return false;
+  }
+  return true;
+}
+
 function sendReport() {
+  if (!validateRequiredFields()) return;
   if (!recipients.length) { alert('Add at least one recipient email address.'); return; }
 
   var biz     = document.getElementById('biz').value || 'Service Report';
@@ -1474,11 +1806,14 @@ function downloadCSV() {
     'Range','Equipment Type','Model','Serial / Mfg Date',
     'Gas Type','Warranty','Static Pressure (kPa)','Dynamic Pressure (kPa)',
     'Total Items','Passed','Failed','N/A',
-    'Failed Items','Non-Warranty Issues','Comments'
+    'Failed Items','Non-Warranty Issues','Comments','Billing Status'
   ];
 
   var gasVal = document.getElementById('gas').value === 'ng' ? 'Natural Gas (NG)' : 'LPG';
   var warVal = document.getElementById('warranty').value || 'Unknown';
+  var billVal = billingStatus === 'warranty' ? 'Warranty - No charge'
+               : billingStatus === 'chargeable' ? 'Chargeable - Bill customer'
+               : 'Not specified';
 
   var row = [
     v('sdate'), v('biz'), v('address'), v('contact'), v('phone'), v('tech'),
@@ -1488,7 +1823,8 @@ function downloadCSV() {
     checklist.length, pass, fail, na,
     failItems.join(' | '),
     nwIssues,
-    v('comments')
+    v('comments'),
+    billVal
   ];
 
   var csvHeader = headers.map(function(h){ return '"' + h + '"'; }).join(',');
@@ -1536,6 +1872,7 @@ function saveJob() {
     hasIssues: fail > 0 || flags.length > 0,
     flagCount: flags.length,
     sent:      recipients.join(', '),
+    billing:   billingStatus || 'unspecified',
     // Save full data for report replay
     reportText: buildReport(),
     photos:    photos.slice(),
@@ -1572,7 +1909,8 @@ function saveJob() {
       fail:      job.fail,
       flagCount: job.flagCount,
       flags:     job.flags,
-      sent:      job.sent
+      sent:      job.sent,
+      billing:   job.billing
     }));
   } catch(e) {}
   renderHistory();
@@ -1581,6 +1919,13 @@ function saveJob() {
 
 // ── HISTORY PASSWORD ──────────────────────────────────────────────────────
 var _historyUnlocked = false;
+
+function cancelHistoryUnlock() {
+  document.getElementById('hist-pw-overlay').style.display = 'none';
+  document.getElementById('hist-pw-input').value = '';
+  document.getElementById('hist-pw-error').textContent = '';
+  go('job');
+}
 
 function unlockHistory() {
   var entered = document.getElementById('hist-pw-input').value;
@@ -1659,6 +2004,10 @@ function buildReportHTMLWithText(reportText, j) {
       return '<div style="color:#dc2626;font-weight:bold;font-size:12px;font-family:monospace;padding:2px 0;">' + l + '</div>';
     if (l.indexOf('⚠') === 0)
       return '<div style="color:#d97706;font-weight:bold;font-size:12px;font-family:Arial,sans-serif;padding:3px 0;">' + l + '</div>';
+    if (l.indexOf('🛡️') === 0)
+      return '<div style="background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;font-weight:bold;font-size:13px;font-family:Arial,sans-serif;padding:8px 12px;border-radius:6px;margin:4px 0;">' + l + '</div>';
+    if (l.indexOf('💵') === 0)
+      return '<div style="background:#fff7ed;border:1px solid #fed7aa;color:#ea580c;font-weight:bold;font-size:13px;font-family:Arial,sans-serif;padding:8px 12px;border-radius:6px;margin:4px 0;">' + l + '</div>';
     if (l.trim() === '') return '<div style="height:6px;"></div>';
     return '<div style="font-size:12px;font-family:monospace;color:#1e293b;padding:1px 0;">' + l + '</div>';
   }).join('');
@@ -1722,6 +2071,9 @@ function renderHistoryList() {
           (j.fail  ? '<span class="badge b-fail">✗ ' + j.fail + '</span>' : '') +
           (j.flagCount ? '<span class="badge b-warn">⚠ ' + j.flagCount + ' issues</span>' : '') +
           (hasPhotos ? '<span class="badge" style="background:#e0f2fe;color:#0369a1;">📷 photos</span>' : '') +
+          (j.billing === 'warranty' ? '<span class="badge" style="background:#f0fdf4;color:#16a34a;">🛡️ Warranty</span>'
+            : j.billing === 'chargeable' ? '<span class="badge" style="background:#fff7ed;color:#ea580c;">💵 Chargeable</span>'
+            : '<span class="badge" style="background:#f1f5f9;color:#64748b;">Billing not set</span>') +
         '</div>' +
         '<div style="font-size:10px;color:var(--muted);margin-top:3px;">Sent to: ' + (j.sent||'—') + '</div>' +
       '</div>' +
