@@ -121,6 +121,9 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
 .flag-item { display: flex; align-items: flex-start; gap: 8px; background: var(--red-bg); border-left: 3px solid var(--red); border-radius: 0 8px 8px 0; padding: 9px 10px; margin-bottom: 6px; }
 .flag-txt { flex: 1; font-size: 13px; font-weight: 600; color: #991b1b; }
 .flag-cat { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.part-item { display: flex; align-items: center; gap: 8px; background: #f0f9ff; border-left: 3px solid #0284c7; border-radius: 0 8px 8px 0; padding: 9px 10px; margin-bottom: 6px; }
+.part-txt { flex: 1; font-size: 13px; font-weight: 600; color: #0c4a6e; }
+.part-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
 /* PHOTOS */
 .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -260,6 +263,16 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
 <!-- JOB TAB -->
 <div class="screen active" id="screen-job">
   <div class="card">
+    <div class="card-head"><div class="card-icon">🔢</div>
+      <div><div class="card-title">Service Order Number</div><div class="card-sub">From the job dispatch / work order</div></div>
+    </div>
+    <div class="card-body">
+      <div class="field"><label class="lbl">Service Order # *</label>
+        <input class="inp" id="sonum" type="text" placeholder="e.g. SO-12345" autocomplete="off"></div>
+    </div>
+  </div>
+
+  <div class="card">
     <div class="card-head"><div class="card-icon">🏢</div>
       <div><div class="card-title">Site Details</div><div class="card-sub">Where and who</div></div>
     </div>
@@ -326,6 +339,25 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
       <textarea class="inp" id="comments" placeholder="Observations, recommendations, follow-up required…"></textarea>
     </div>
   </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-icon">🔧</div>
+      <div><div class="card-title">Spare Parts Used</div>
+        <div class="card-sub">List any parts fitted during this service</div></div>
+    </div>
+    <div class="card-body">
+      <div id="parts-list"></div>
+      <div class="add-email-row">
+        <input class="inp" id="part-name-in" type="text" placeholder="Part name / description">
+      </div>
+      <div class="add-email-row" style="margin-top:8px;">
+        <input class="inp" id="part-qty-in" type="number" min="1" step="1" placeholder="Qty" style="max-width:90px;" value="1">
+        <input class="inp" id="part-code-in" type="text" placeholder="Part number (optional)">
+        <button class="add-btn" onclick="addPart()">+</button>
+      </div>
+    </div>
+  </div>
+
   <button class="btn btn-navy" onclick="go('issues')">Next: Issues & Photos →</button>
 </div>
 
@@ -356,6 +388,23 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
   </div>
 
   <div id="photos-container"></div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-icon">💲</div>
+      <div><div class="card-title">Extra Fees</div>
+        <div class="card-sub">Additional charges to note on the invoice</div></div>
+    </div>
+    <div class="card-body">
+      <div class="row2">
+        <div class="field"><label class="lbl">Parking Fee ($)</label>
+          <input class="inp" id="fee-parking" type="number" min="0" step="0.01" placeholder="0.00" inputmode="decimal"></div>
+        <div class="field"><label class="lbl">Other Fees ($)</label>
+          <input class="inp" id="fee-other-amt" type="number" min="0" step="0.01" placeholder="0.00" inputmode="decimal"></div>
+      </div>
+      <div class="field"><label class="lbl">Other Fee Description</label>
+        <input class="inp" id="fee-other-desc" type="text" placeholder="e.g. Toll fees, after-hours surcharge"></div>
+    </div>
+  </div>
 
   <button class="btn btn-navy" onclick="go('send')">Next: Send Report →</button>
 </div>
@@ -1104,10 +1153,10 @@ var CHECKLISTS = {
 };
 
 // ── STATE ─────────────────────────────────────────────────────────────────
-var checklist = [], states = {}, flags = [], recipients = ['clientservices@bscommercialkitchens.com'], jobs = [];
+var checklist = [], states = {}, flags = [], parts = [], recipients = ['clientservices@bscommercialkitchens.com'], jobs = [];
 var units = [];
 function makeUnit() {
-  return { erange:'', etype:'', model:'', serial:'', gas:'ng', warranty:'', pStatic:'', pDynamic:'', pErrorCode:'', billing:null, photos:[null,null,null,null,null] };
+  return { erange:'', etype:'', model:'', serial:'', gas:'ng', warranty:'', pStatic:'', pDynamic:'', pErrorCode:'', pressureResult:null, billing:null, photos:[null,null,null,null,null] };
 }
 units.push(makeUnit());
 var PHOTO_LABELS = ['Before service','After service','Non-warranty issue','Gas connections','Other'];
@@ -1180,6 +1229,7 @@ function renderUnits() {
             '<input class="inp" id="p-errorcode-'+i+'" type="text" value="'+(u.pErrorCode||'')+'" placeholder="e.g. E6, EA — leave blank if none" style="text-transform:uppercase; letter-spacing:1px;" onchange="saveUnitFields('+i+')"></div>' +
         '</div>';
     } else {
+      function psel(val, opt){ return val===opt ? ' active-' + (opt==='pass'?'warranty':'chargeable') : ''; }
       preflightHTML =
         '<div class="card-head"><div class="card-icon">📊</div>' +
           '<div><div class="card-title">Gas Pressure</div>' +
@@ -1191,6 +1241,11 @@ function renderUnits() {
             '<div class="field"><label class="lbl">Dynamic (kPa) *</label>' +
               '<input class="inp" id="p-dynamic-'+i+'" type="number" step="0.01" value="'+(u.pDynamic||'')+'" placeholder="e.g. 2.50" inputmode="decimal" onchange="saveUnitFields('+i+')"></div>' +
           '</div>' +
+          '<div class="field"><label class="lbl">Pressure Test Result *</label>' +
+            '<div class="row2">' +
+              '<button type="button" class="btn-toggle' + psel(u.pressureResult,'pass') + '" onclick="setPressureResult('+i+',\'pass\')">✓ Pass<br><span style="font-size:10px;font-weight:400;">Within spec</span></button>' +
+              '<button type="button" class="btn-toggle' + psel(u.pressureResult,'fail') + '" onclick="setPressureResult('+i+',\'fail\')">✗ Fail<br><span style="font-size:10px;font-weight:400;">Out of spec</span></button>' +
+            '</div></div>' +
         '</div>';
     }
 
@@ -1323,6 +1378,7 @@ function validateJobFields() {
     var el = document.getElementById(id);
     if (!el || !el.value || !el.value.toString().trim()) missing.push(label);
   }
+  check('sonum',   'Service Order Number');
   check('biz',     'Business Name');
   check('contact', 'Contact Person');
   check('phone',   'Phone');
@@ -1339,6 +1395,9 @@ function validateJobFields() {
     check('serial-'+i,  prefix + 'Serial / Mfg Date');
     check('p-static-'+i,  prefix + 'Static Pressure');
     check('p-dynamic-'+i, prefix + 'Dynamic Pressure');
+    if (u.erange !== 'SCooker' && !u.pressureResult) {
+      missing.push(prefix + 'Pressure Test Result (Pass/Fail)');
+    }
   });
 
   if (missing.length) {
@@ -1442,7 +1501,33 @@ function renderFlags() {
   }).join('');
 }
 
-// ── PHOTOS ────────────────────────────────────────────────────────────────
+// ── SPARE PARTS ───────────────────────────────────────────────────────────
+function addPart() {
+  var nameInp = document.getElementById('part-name-in');
+  var qtyInp  = document.getElementById('part-qty-in');
+  var codeInp = document.getElementById('part-code-in');
+  var name = nameInp.value.trim();
+  if (!name) return;
+  var qty  = parseInt(qtyInp.value, 10) || 1;
+  var code = codeInp.value.trim();
+  parts.push({ name: name, qty: qty, code: code });
+  nameInp.value = ''; codeInp.value = ''; qtyInp.value = '1';
+  renderParts();
+}
+
+function removePart(i) { parts.splice(i,1); renderParts(); }
+
+function renderParts() {
+  var c = document.getElementById('parts-list');
+  if (!parts.length) { c.innerHTML = ''; return; }
+  c.innerHTML = parts.map(function(p,i){
+    return '<div class="part-item">' +
+      '<div style="flex:1"><div class="part-txt">' + p.qty + ' × ' + p.name + '</div>' +
+      (p.code ? '<div class="part-meta">Part #: ' + p.code + '</div>' : '') + '</div>' +
+      '<button onclick="removePart('+i+')" style="background:none;border:none;font-size:18px;color:var(--red);cursor:pointer;">✕</button>' +
+      '</div>';
+  }).join('');
+}
 function renderPhotoGrids() {
   var c = document.getElementById('photos-container');
   if (!c) return;
@@ -1523,6 +1608,11 @@ function setBillingStatus(i, status) {
   renderBilling();
 }
 
+function setPressureResult(i, result) {
+  units[i].pressureResult = result;
+  renderUnits();
+}
+
 function renderRecipients() {
   var c = document.getElementById('recipients-list');
   if (!recipients.length) { c.innerHTML = ''; return; }
@@ -1554,6 +1644,7 @@ function buildReport() {
   lines.push('');
   lines.push('JOB DETAILS');
   lines.push('─'.repeat(30));
+  lines.push('Service Order #: ' + v('sonum'));
   lines.push('Business:        ' + v('biz'));
   lines.push('Address:         ' + v('address'));
   lines.push('Contact:         ' + v('contact') + '   ' + v('phone'));
@@ -1588,6 +1679,13 @@ function buildReport() {
     } else {
       lines.push('Static Pressure: ' + (u.pStatic || '—') + ' kPa');
       lines.push('Dynamic Press.:  ' + (u.pDynamic || '—') + ' kPa');
+      if (u.pressureResult === 'pass') {
+        lines.push('Pressure Test:   ✓ PASS — within specification');
+      } else if (u.pressureResult === 'fail') {
+        lines.push('Pressure Test:   ✗ FAIL — out of specification');
+        lines.push('');
+        lines.push('⚠ The customer should contact a licensed plumber for further investigation, or the plumber that installed the unit.');
+      }
     }
 
     lines.push('');
@@ -1627,6 +1725,26 @@ function buildReport() {
     lines.push(comments);
   }
 
+  if (parts.length) {
+    lines.push('');
+    lines.push('SPARE PARTS USED');
+    lines.push('─'.repeat(30));
+    parts.forEach(function(p){ lines.push('🔧  ' + p.qty + ' × ' + p.name + (p.code ? '  (Part #: ' + p.code + ')' : '')); });
+  }
+
+  var parkingFee = parseFloat(document.getElementById('fee-parking').value) || 0;
+  var otherFee   = parseFloat(document.getElementById('fee-other-amt').value) || 0;
+  var otherDesc  = document.getElementById('fee-other-desc').value.trim();
+  if (parkingFee > 0 || otherFee > 0) {
+    lines.push('');
+    lines.push('EXTRA FEES');
+    lines.push('─'.repeat(30));
+    if (parkingFee > 0) lines.push('💲  Parking Fee:      $' + parkingFee.toFixed(2));
+    if (otherFee > 0)   lines.push('💲  Other Fee' + (otherDesc ? ' (' + otherDesc + ')' : '') + ':  $' + otherFee.toFixed(2));
+    var totalFees = parkingFee + otherFee;
+    lines.push('   Total Extra Fees:  $' + totalFees.toFixed(2));
+  }
+
   lines.push('');
   lines.push('─'.repeat(46));
   lines.push('B+S Commercial Kitchens Pty Ltd');
@@ -1641,9 +1759,10 @@ function buildReport() {
 function buildReportHTML() {
   var biz    = document.getElementById('biz').value || 'Service Report';
   var date   = document.getElementById('sdate').value;
+  var sonum  = document.getElementById('sonum').value || '';
   var note   = document.getElementById('send-note').value.trim();
   var report = buildReport();
-  var subject = 'B+S Service Report - ' + biz + ' - ' + date;
+  var subject = 'B+S Service Report - ' + (sonum ? 'SO#' + sonum + ' - ' : '') + biz + ' - ' + date;
   var photoLabels = ['Before service','After service','Non-warranty issue','Gas connections','Other'];
 
   var reportLines = report.split('\n').map(function(l) {
@@ -1663,6 +1782,10 @@ function buildReportHTML() {
       return '<div style="background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;font-weight:bold;font-size:13px;font-family:Arial,sans-serif;padding:8px 12px;border-radius:6px;margin:4px 0;">' + l + '</div>';
     if (l.indexOf('💵') === 0)
       return '<div style="background:#fff7ed;border:1px solid #fed7aa;color:#ea580c;font-weight:bold;font-size:13px;font-family:Arial,sans-serif;padding:8px 12px;border-radius:6px;margin:4px 0;">' + l + '</div>';
+    if (l.indexOf('🔧') === 0)
+      return '<div style="color:#0c4a6e;font-size:12px;font-family:Arial,sans-serif;padding:2px 0;">' + l + '</div>';
+    if (l.indexOf('💲') === 0 || l.trim().indexOf('Total Extra Fees') === 0)
+      return '<div style="color:#166534;font-weight:bold;font-size:12px;font-family:Arial,sans-serif;padding:2px 0;">' + l + '</div>';
     if (l.trim() === '') return '<div style="height:6px;"></div>';
     return '<div style="font-size:12px;font-family:monospace;color:#1e293b;padding:1px 0;">' + l + '</div>';
   }).join('');
@@ -1788,6 +1911,19 @@ function downloadCSVFromHistory() {
         rows.push([text, '']);
       });
     }
+    if (j.parts && j.parts.length) {
+      rows.push(['','']);
+      rows.push(['SPARE PARTS USED','']);
+      j.parts.forEach(function(p){
+        rows.push([p.qty + ' x ' + p.name + (p.code ? ' (Part #: '+p.code+')' : ''), '']);
+      });
+    }
+    if ((j.feeParking||0) > 0 || (j.feeOtherAmt||0) > 0) {
+      rows.push(['','']);
+      rows.push(['EXTRA FEES','']);
+      if ((j.feeParking||0) > 0) rows.push(['Parking Fee ($)', (j.feeParking||0).toFixed(2)]);
+      if ((j.feeOtherAmt||0) > 0) rows.push(['Other Fee ($)' + (j.feeOtherDesc ? ' - ' + j.feeOtherDesc : ''), (j.feeOtherAmt||0).toFixed(2)]);
+    }
     csvText = rows.map(function(r){
       return r.map(function(c){ return '"' + String(c).replace(/"/g,'""') + '"'; }).join(',');
     }).join('\n');
@@ -1825,8 +1961,9 @@ function sendReport() {
 
   var biz     = document.getElementById('biz').value || 'Service Report';
   var date    = document.getElementById('sdate').value;
+  var sonum   = document.getElementById('sonum').value || '';
   var note    = document.getElementById('send-note').value.trim();
-  var subject = 'B+S Service Report - ' + biz + ' - ' + date;
+  var subject = 'B+S Service Report - ' + (sonum ? 'SO#' + sonum + ' - ' : '') + biz + ' - ' + date;
   var to      = recipients.join(',');
   var report  = buildReport();
   var hasPhotos = units.some(function(u){ return u.photos.some(function(p){ return p; }); });
@@ -1890,13 +2027,18 @@ function downloadCSV() {
   function v(id){ var el = document.getElementById(id); return esc(el ? el.value : ''); }
 
   var nwIssues = flags.map(function(f){ return f.text + (f.cat ? ' ('+f.cat+')' : ''); }).join(' | ');
+  var partsUsed = parts.map(function(p){ return p.qty + ' x ' + p.name + (p.code ? ' (Part #: '+p.code+')' : ''); }).join(' | ');
+  var parkingFeeVal = parseFloat(document.getElementById('fee-parking').value) || 0;
+  var otherFeeVal   = parseFloat(document.getElementById('fee-other-amt').value) || 0;
+  var otherFeeDesc  = esc(document.getElementById('fee-other-desc').value);
 
   var headers = [
-    'Date','Business','Address','Contact','Phone','Technician',
+    'Service Order #','Date','Business','Address','Contact','Phone','Technician',
     'Unit','Range','Equipment Type','Model','Serial / Mfg Date',
-    'Gas Type','Warranty','Static Pressure (kPa)','Dynamic Pressure (kPa)',
+    'Gas Type','Warranty','Static Pressure (kPa)','Dynamic Pressure (kPa)','Pressure Test Result',
     'Total Items','Passed','Failed','N/A',
-    'Failed Items','Non-Warranty Issues','Comments','Billing Status'
+    'Failed Items','Non-Warranty Issues','Spare Parts Used','Comments','Billing Status',
+    'Parking Fee ($)','Other Fee ($)','Other Fee Description'
   ];
 
   var rows = units.map(function(u, ui) {
@@ -1912,15 +2054,20 @@ function downloadCSV() {
                  : u.billing === 'chargeable' ? 'Chargeable - Bill customer'
                  : 'Not specified';
     return [
-      v('sdate'), v('biz'), v('address'), v('contact'), v('phone'), v('tech'),
+      v('sonum'), v('sdate'), v('biz'), v('address'), v('contact'), v('phone'), v('tech'),
       (ui+1), esc(u.erange), esc(u.etype), esc(u.model), esc(u.serial),
       gasVal, warVal,
       esc(u.pStatic), esc(u.pDynamic),
+      esc(u.erange==='SCooker' ? '' : (u.pressureResult === 'pass' ? 'Pass' : u.pressureResult === 'fail' ? 'Fail' : '')),
       checklist.filter(function(i){return i.unitIndex===ui;}).length, pass, fail, na,
       failItems.join(' | '),
       nwIssues,
+      partsUsed,
       v('comments'),
-      billVal
+      billVal,
+      parkingFeeVal.toFixed(2),
+      otherFeeVal.toFixed(2),
+      otherFeeDesc
     ];
   });
 
@@ -1964,7 +2111,7 @@ function saveJob() {
     return {
       erange: u.erange, etype: u.etype, model: u.model, serial: u.serial,
       gas: u.gas, warranty: u.warranty,
-      pStatic: u.pStatic, pDynamic: u.pDynamic, pErrorCode: u.pErrorCode,
+      pStatic: u.pStatic, pDynamic: u.pDynamic, pErrorCode: u.pErrorCode, pressureResult: u.pressureResult,
       billing: u.billing,
       pass: upass, fail: ufail, na: una,
       photos: u.photos.slice()
@@ -1973,6 +2120,7 @@ function saveJob() {
 
   var job = {
     id: Date.now(),
+    sonum:     document.getElementById('sonum').value,
     biz:       document.getElementById('biz').value,
     address:   document.getElementById('address').value,
     contact:   document.getElementById('contact').value,
@@ -1990,6 +2138,10 @@ function saveJob() {
     // Save full data for report replay
     reportText: buildReport(),
     flags:     flags.slice(),
+    parts:     parts.slice(),
+    feeParking: parseFloat(document.getElementById('fee-parking').value) || 0,
+    feeOtherAmt: parseFloat(document.getElementById('fee-other-amt').value) || 0,
+    feeOtherDesc: document.getElementById('fee-other-desc').value,
     states:    JSON.parse(JSON.stringify(states)),
     checklist: checklist.map(function(i){ return {t:i.t,c:i.c,unitIndex:i.unitIndex}; })
   };
@@ -2019,6 +2171,7 @@ function saveJob() {
       });
       var img = new Image();
       img.src = SHEETS_URL + '?data=' + encodeURIComponent(JSON.stringify({
+        sonum:     job.sonum,
         date:      job.date,
         biz:       job.biz,
         address:   job.address,
@@ -2114,6 +2267,10 @@ function buildReportHTMLWithText(reportText, j) {
       return '<div style="background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;font-weight:bold;font-size:13px;font-family:Arial,sans-serif;padding:8px 12px;border-radius:6px;margin:4px 0;">' + l + '</div>';
     if (l.indexOf('💵') === 0)
       return '<div style="background:#fff7ed;border:1px solid #fed7aa;color:#ea580c;font-weight:bold;font-size:13px;font-family:Arial,sans-serif;padding:8px 12px;border-radius:6px;margin:4px 0;">' + l + '</div>';
+    if (l.indexOf('🔧') === 0)
+      return '<div style="color:#0c4a6e;font-size:12px;font-family:Arial,sans-serif;padding:2px 0;">' + l + '</div>';
+    if (l.indexOf('💲') === 0 || l.trim().indexOf('Total Extra Fees') === 0)
+      return '<div style="color:#166534;font-weight:bold;font-size:12px;font-family:Arial,sans-serif;padding:2px 0;">' + l + '</div>';
     if (l.trim() === '') return '<div style="height:6px;"></div>';
     return '<div style="font-size:12px;font-family:monospace;color:#1e293b;padding:1px 0;">' + l + '</div>';
   }).join('');
@@ -2141,7 +2298,7 @@ function buildReportHTMLWithText(reportText, j) {
     photoHTML += '</div>';
   }
 
-  var subject = 'B+S Service Report - ' + biz + ' - ' + date;
+  var subject = 'B+S Service Report - ' + (j.sonum ? 'SO#' + j.sonum + ' - ' : '') + biz + ' - ' + date;
   return '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
     '<meta name="viewport" content="width=device-width,initial-scale=1">' +
     '<title>' + subject + '</title>' +
@@ -2177,7 +2334,7 @@ function renderHistoryList() {
     return '<div class="hist-item" onclick="openHistoryJob(' + idx + ')" style="cursor:pointer;">' +
       '<div class="hist-dot ' + (j.hasIssues?'bad':'ok') + '"></div>' +
       '<div style="flex:1">' +
-        '<div class="hist-biz">' + (j.biz||'—') + '</div>' +
+        '<div class="hist-biz">' + (j.biz||'—') + (j.sonum ? ' <span style="font-weight:500;color:var(--muted);font-size:11px;">· SO# ' + j.sonum + '</span>' : '') + '</div>' +
         '<div class="hist-meta">' + (j.type||'—') + ' · ' + d + ' · ' + (j.tech||'—') + '</div>' +
         '<div>' +
           '<span class="badge b-pass">✓ ' + j.pass + '</span>' +
