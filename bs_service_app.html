@@ -1995,6 +1995,7 @@ function sendReport() {
 
 // ── PHOTO REPORT (called from history or elsewhere) ───────────────────────
 function openPhotoReport() {
+  if (!validateRequiredFields()) return;
   var biz  = document.getElementById('biz').value || 'Service Report';
   var date = document.getElementById('sdate').value;
   var bizSafe = biz.replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -2003,10 +2004,9 @@ function openPhotoReport() {
   _currentReportHTML     = pageHTML;
   _currentReportFilename = 'BS_Service_' + bizSafe + '_' + date + '.html';
 
-  var overlay = document.getElementById('report-overlay');
-  var frame   = document.getElementById('report-frame');
-  frame.srcdoc = pageHTML;
-  overlay.style.display = 'flex';
+  // Go straight to print dialog — skips the in-app viewer
+  printReport();
+  saveJob();
 }
 
 // ── CSV EXPORT ──────────────────────────────────────────────────────────────
