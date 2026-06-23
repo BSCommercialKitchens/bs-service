@@ -105,9 +105,6 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
 .btn-orange { background: var(--orange); color: white; box-shadow: 0 4px 14px rgba(249,115,22,0.35); }
 .btn-orange:active { transform: scale(0.98); }
 .btn-ghost  { background: white; color: var(--navy); border: 1.5px solid var(--navy); }
-.btn-toggle { padding: 14px 8px; border: 1.5px solid var(--mid); border-radius: var(--radius-sm); background: white; color: var(--text); font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; line-height: 1.5; transition: all 0.12s; }
-.btn-toggle.active-warranty { border-color: #16a34a; background: #f0fdf4; color: #16a34a; }
-.btn-toggle.active-chargeable { border-color: #f97316; background: #fff7ed; color: #f97316; }
 
 /* SEND */
 .add-email-row { display: flex; gap: 8px; }
@@ -121,9 +118,6 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
 .flag-item { display: flex; align-items: flex-start; gap: 8px; background: var(--red-bg); border-left: 3px solid var(--red); border-radius: 0 8px 8px 0; padding: 9px 10px; margin-bottom: 6px; }
 .flag-txt { flex: 1; font-size: 13px; font-weight: 600; color: #991b1b; }
 .flag-cat { font-size: 11px; color: var(--muted); margin-top: 2px; }
-.part-item { display: flex; align-items: center; gap: 8px; background: #f0f9ff; border-left: 3px solid #0284c7; border-radius: 0 8px 8px 0; padding: 9px 10px; margin-bottom: 6px; }
-.part-txt { flex: 1; font-size: 13px; font-weight: 600; color: #0c4a6e; }
-.part-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
 /* PHOTOS */
 .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -156,16 +150,6 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
 .overlay-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
 .overlay-title { font-size: 15px; font-weight: 800; color: var(--navy); }
 .overlay-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted); }
-
-/* REPORT VIEWER OVERLAY */
-.report-overlay { position: fixed; inset: 0; background: #1a3a5c; display: none; flex-direction: column; z-index: 1000; }
-.report-toolbar { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: #1a3a5c; flex-shrink: 0; }
-.report-toolbar-title { flex: 1; font-size: 14px; font-weight: 700; color: white; }
-.report-toolbar-btn { padding: 9px 16px; border: none; border-radius: 9px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; }
-.report-toolbar-btn.download { background: var(--orange); color: white; }
-.report-toolbar-btn.close { background: rgba(255,255,255,0.15); color: white; font-size: 18px; padding: 9px 13px; }
-.report-frame-wrap { flex: 1; overflow: hidden; background: #f0f4f8; }
-.report-frame { width: 100%; height: 100%; border: none; display: block; }
 
 .sect-lbl { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); padding: 4px 0 8px; }
 
@@ -263,16 +247,6 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
 <!-- JOB TAB -->
 <div class="screen active" id="screen-job">
   <div class="card">
-    <div class="card-head"><div class="card-icon">🔢</div>
-      <div><div class="card-title">Service Order Number</div><div class="card-sub">From the job dispatch / work order</div></div>
-    </div>
-    <div class="card-body">
-      <div class="field"><label class="lbl">Service Order # *</label>
-        <input class="inp" id="sonum" type="text" placeholder="e.g. SO-12345" autocomplete="off"></div>
-    </div>
-  </div>
-
-  <div class="card">
     <div class="card-head"><div class="card-icon">🏢</div>
       <div><div class="card-title">Site Details</div><div class="card-sub">Where and who</div></div>
     </div>
@@ -280,12 +254,12 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
       <div class="field"><label class="lbl">Business Name *</label>
         <input class="inp" id="biz" type="text" placeholder="e.g. The Royal Hotel" autocomplete="organization"></div>
       <div class="row2">
-        <div class="field"><label class="lbl">Contact Person *</label>
+        <div class="field"><label class="lbl">Contact Person</label>
           <input class="inp" id="contact" type="text" placeholder="Name"></div>
-        <div class="field"><label class="lbl">Phone *</label>
+        <div class="field"><label class="lbl">Phone</label>
           <input class="inp" id="phone" type="tel" placeholder="04xx xxx xxx"></div>
       </div>
-      <div class="field"><label class="lbl">Address *</label>
+      <div class="field"><label class="lbl">Address</label>
         <input class="inp" id="address" type="text" placeholder="Street, Suburb, State"></div>
     </div>
   </div>
@@ -304,9 +278,61 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
     </div>
   </div>
 
-  <div id="units-container"></div>
+  <div class="card">
+    <div class="card-head"><div class="card-icon">⚙️</div>
+      <div><div class="card-title">Equipment</div></div>
+    </div>
+    <div class="card-body">
+      <div class="row2">
+        <div class="field"><label class="lbl">Range *</label>
+          <select class="inp" id="erange" onchange="onRangeChange()">
+            <option value="">Select...</option>
+            <option>B+S Black</option>
+            <option>K+</option>
+            <option>Rapid</option>
+            <option>SCooker</option>
+          </select></div>
+        <div class="field"><label class="lbl">Type *</label>
+          <select class="inp" id="etype" onchange="onTypeChange()">
+            <option value="">Select...</option>
+          </select></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label class="lbl">Model Code</label>
+          <input class="inp" id="model" type="text" placeholder="e.g. GRP-6"></div>
+        <div class="field"><label class="lbl">Serial / Mfg Date</label>
+          <input class="inp" id="serial" type="text" placeholder="Serial or date"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label class="lbl">Gas Type</label>
+          <select class="inp" id="gas">
+            <option value="ng">Natural Gas (NG)</option>
+            <option value="lpg">LPG</option>
+          </select></div>
+        <div class="field"><label class="lbl">Warranty</label>
+          <select class="inp" id="warranty">
+            <option value="">Unknown</option>
+            <option>In Warranty</option>
+            <option>Out of Warranty</option>
+          </select></div>
+      </div>
+    </div>
+  </div>
 
-  <button class="btn btn-ghost" type="button" onclick="addUnit()" style="margin-top:6px;">➕ Add Another Unit</button>
+  <div class="card" id="preflight-card">
+    <div class="card-head"><div class="card-icon" id="preflight-icon">📊</div>
+      <div><div class="card-title" id="preflight-title">Gas Pressure</div>
+           <div class="card-sub" id="preflight-sub">Record before starting</div></div>
+    </div>
+    <div class="card-body" id="preflight-body">
+      <div class="row2">
+        <div class="field"><label class="lbl">Static (kPa)</label>
+          <input class="inp" id="p-static" type="number" step="0.01" placeholder="e.g. 2.75" inputmode="decimal"></div>
+        <div class="field"><label class="lbl">Dynamic (kPa)</label>
+          <input class="inp" id="p-dynamic" type="number" step="0.01" placeholder="e.g. 2.50" inputmode="decimal"></div>
+      </div>
+    </div>
+  </div>
 
   <button class="btn btn-navy" onclick="startChecklist()">Start Checklist →</button>
 </div>
@@ -339,25 +365,6 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
       <textarea class="inp" id="comments" placeholder="Observations, recommendations, follow-up required…"></textarea>
     </div>
   </div>
-
-  <div class="card">
-    <div class="card-head"><div class="card-icon">🔧</div>
-      <div><div class="card-title">Spare Parts Used</div>
-        <div class="card-sub">List any parts fitted during this service</div></div>
-    </div>
-    <div class="card-body">
-      <div id="parts-list"></div>
-      <div class="add-email-row">
-        <input class="inp" id="part-name-in" type="text" placeholder="Part name / description">
-      </div>
-      <div class="add-email-row" style="margin-top:8px;">
-        <input class="inp" id="part-qty-in" type="number" min="1" step="1" placeholder="Qty" style="max-width:90px;" value="1">
-        <input class="inp" id="part-code-in" type="text" placeholder="Part number (optional)">
-        <button class="add-btn" onclick="addPart()">+</button>
-      </div>
-    </div>
-  </div>
-
   <button class="btn btn-navy" onclick="go('issues')">Next: Issues & Photos →</button>
 </div>
 
@@ -387,22 +394,13 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
     </div>
   </div>
 
-  <div id="photos-container"></div>
-
   <div class="card">
-    <div class="card-head"><div class="card-icon">💲</div>
-      <div><div class="card-title">Extra Fees</div>
-        <div class="card-sub">Additional charges to note on the invoice</div></div>
+    <div class="card-head"><div class="card-icon">📷</div>
+      <div><div class="card-title">Photos</div>
+        <div class="card-sub">Photos are included automatically in the email</div></div>
     </div>
     <div class="card-body">
-      <div class="row2">
-        <div class="field"><label class="lbl">Parking Fee ($)</label>
-          <input class="inp" id="fee-parking" type="number" min="0" step="0.01" placeholder="0.00" inputmode="decimal"></div>
-        <div class="field"><label class="lbl">Other Fees ($)</label>
-          <input class="inp" id="fee-other-amt" type="number" min="0" step="0.01" placeholder="0.00" inputmode="decimal"></div>
-      </div>
-      <div class="field"><label class="lbl">Other Fee Description</label>
-        <input class="inp" id="fee-other-desc" type="text" placeholder="e.g. Toll fees, after-hours surcharge"></div>
+      <div class="photo-grid" id="photo-grid"></div>
     </div>
   </div>
 
@@ -426,8 +424,6 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
     </div>
   </div>
 
-  <div id="billing-container"></div>
-
   <div class="card">
     <div class="card-head"><div class="card-icon">📝</div>
       <div><div class="card-title">Message (optional)</div></div>
@@ -437,7 +433,7 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
     </div>
   </div>
 
-  <button class="btn btn-orange" onclick="openPhotoReport()">📸 Photo Report</button>
+  <button class="btn btn-orange" onclick="sendReport()">📧 Send</button>
 </div>
 
 <!-- ERROR CODES TAB -->
@@ -479,20 +475,6 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
   </div>
 </div>
 
-<!-- HISTORY PASSWORD OVERLAY (outside screen div so it always renders) -->
-<div id="hist-pw-overlay" style="position:fixed;inset:0;background:rgba(15,36,64,0.97);z-index:500;display:none;align-items:center;justify-content:center;padding:24px;">
-  <div style="background:white;border-radius:16px;padding:28px 24px;width:100%;max-width:340px;text-align:center;position:relative;">
-    <button onclick="cancelHistoryUnlock()" style="position:absolute;top:12px;left:12px;background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer;padding:4px 8px;line-height:1;">←</button>
-    <div style="font-size:32px;margin-bottom:12px;">🔒</div>
-    <div style="font-size:17px;font-weight:800;color:var(--navy);margin-bottom:6px;">History Access</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:20px;">Enter the History password to continue</div>
-    <input id="hist-pw-input" type="password" placeholder="Password" onkeydown="if(event.key==='Enter')unlockHistory()"
-      style="width:100%;padding:13px 14px;border:1.5px solid var(--mid);border-radius:10px;font-size:15px;font-family:inherit;outline:none;margin-bottom:10px;text-align:center;">
-    <div id="hist-pw-error" style="color:var(--red);font-size:12px;min-height:18px;margin-bottom:8px;"></div>
-    <button onclick="unlockHistory()" style="width:100%;padding:13px;background:var(--orange);color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Unlock</button>
-  </div>
-</div>
-
 <!-- PREVIEW OVERLAY -->
 <div class="overlay" id="preview-overlay">
   <div class="overlay-card">
@@ -504,25 +486,6 @@ textarea.inp { resize: none; line-height: 1.5; min-height: 90px; }
   </div>
 </div>
 
-<!-- REPORT VIEWER OVERLAY -->
-<div class="report-overlay" id="report-overlay">
-  <div class="report-toolbar">
-    <div class="report-toolbar-title">📄 Service Report</div>
-    <button class="report-toolbar-btn close" onclick="closeReportOverlay()">✕</button>
-  </div>
-  <div style="background:#f97316;height:3px;flex-shrink:0;"></div>
-  <div style="background:#e8f0f9;padding:10px 14px;flex-shrink:0;display:flex;gap:8px;">
-    <button onclick="printReport()" style="flex:2;padding:11px 10px;background:#f97316;color:white;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">🖨️ Print / Share as PDF</button>
-    <button onclick="downloadCSVFromHistory()" style="flex:1;padding:11px 10px;background:white;color:#1a3a5c;border:1.5px solid #1a3a5c;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⬇ CSV</button>
-  </div>
-  <div style="background:#e8f0f9;padding:0 14px 10px;font-size:11px;color:#475569;font-family:sans-serif;text-align:center;flex-shrink:0;">
-    Tap above → then tap <strong>Share</strong> in the print screen → choose <strong>Mail</strong>
-  </div>
-  <div class="report-frame-wrap">
-    <iframe class="report-frame" id="report-frame" sandbox="allow-same-origin allow-scripts"></iframe>
-  </div>
-</div>
-
 <script>
 // ── DATE ──────────────────────────────────────────────────────────────────
 document.getElementById('hdr-date').textContent =
@@ -530,234 +493,6 @@ document.getElementById('hdr-date').textContent =
 document.getElementById('sdate').value = new Date().toISOString().split('T')[0];
 
 // ── DATA ──────────────────────────────────────────────────────────────────
-var MODEL_CODES = {
-  'B+S Black': [
-    // Boiling Tops
-    {code:'BT-SB2', type:'Boiling Top', desc:'Two Burner Boiling Top'},
-    {code:'BT-SB4', type:'Boiling Top', desc:'Four Burner Boiling Top'},
-    {code:'BT-SB6', type:'Boiling Top', desc:'Six Burner Boiling Top'},
-    {code:'BT-SB8', type:'Boiling Top', desc:'Eight Burner Boiling Top'},
-    {code:'BT-SB2BM', type:'Boiling Top', desc:'Two Burner Boiling Top Bench Mounted'},
-    {code:'BT-SB4BM', type:'Boiling Top', desc:'Four Burner Boiling Top Bench Mounted'},
-    {code:'BT-SB6BM', type:'Boiling Top', desc:'Six Burner Boiling Top Bench Mounted'},
-    {code:'BT-SB8BM', type:'Boiling Top', desc:'Eight Burner Boiling Top Bench Mounted'},
-    // Target Tops
-    {code:'TT-9', type:'Target Top', desc:'Target Top 900mm'},
-    {code:'OV-TT9', type:'Target Top', desc:'Oven with 900mm Target Top'},
-    // Combination Tops On Stand
-    {code:'BT-SB2-CBR3', type:'Char Broiler', desc:'Combination Two Open Burners & 300mm Char Broiler'},
-    {code:'BT-SB2-GRP3', type:'Grill Plate', desc:'Combination Two Open Burners & 300mm Grill Plate'},
-    {code:'BT-SB2-CBR6', type:'Char Broiler', desc:'Combination Two Open Burners & 600mm Char Broiler'},
-    {code:'BT-SB2-GRP6', type:'Grill Plate', desc:'Combination Two Open Burners & 600mm Grill Plate'},
-    {code:'BT-SB4-CBR3', type:'Char Broiler', desc:'Combination Four Open Burners & 300mm Char Broiler'},
-    {code:'BT-SB4-GRP3', type:'Grill Plate', desc:'Combination Four Open Burners & 300mm Grill Plate'},
-    {code:'BT-SB6-CBR3', type:'Char Broiler', desc:'Combination Six Open Burners & 300mm Char Broiler'},
-    {code:'BT-SB6-GRP3', type:'Grill Plate', desc:'Combination Six Open Burners & 300mm Grill Plate'},
-    {code:'BT-GRP6-CBR6', type:'Char Broiler', desc:'Combination 600mm Grill Plate & 600mm Char Broiler'},
-    {code:'BT-SB4-GRP6', type:'Grill Plate', desc:'Combination Four Open Burners & 600mm Grill Plate'},
-    // Combination Tops Bench Mounted
-    {code:'BT-SB2-CBR3BM', type:'Char Broiler', desc:'Combination Two Open Burners & 300mm Char Broiler Bench Mounted'},
-    {code:'BT-SB2-GRP3BM', type:'Grill Plate', desc:'Combination Two Open Burners & 300mm Grill Plate Bench Mounted'},
-    {code:'BT-SB2-CBR6BM', type:'Char Broiler', desc:'Combination Two Open Burners & 600mm Char Broiler Bench Mounted'},
-    {code:'BT-SB2-GRP6BM', type:'Grill Plate', desc:'Combination Two Open Burners & 600mm Grill Plate Bench Mounted'},
-    {code:'BT-SB4-CBR3BM', type:'Char Broiler', desc:'Combination Four Open Burners & 300mm Char Broiler Bench Mounted'},
-    {code:'BT-SB4-GRP3BM', type:'Grill Plate', desc:'Combination Four Open Burners & 300mm Grill Plate Bench Mounted'},
-    {code:'BT-SB6-CBR3BM', type:'Char Broiler', desc:'Combination Six Open Burners & 300mm Char Broiler Bench Mounted'},
-    {code:'BT-SB6-GRP3BM', type:'Grill Plate', desc:'Combination Six Open Burners & 300mm Grill Plate Bench Mounted'},
-    {code:'BT-GRP6-CBR6BM', type:'Char Broiler', desc:'Combination 600mm Grill Plate & 600mm Char Broiler Bench Mounted'},
-    {code:'BT-SB4-GRP6BM', type:'Grill Plate', desc:'Combination Four Open Burners & 600mm Grill Plate Bench Mounted'},
-    // Standard Ovens
-    {code:'OV-SB4', type:'Oven Range', desc:'Four Burner Oven'},
-    {code:'OV-SB6', type:'Oven Range', desc:'Six Burner Oven'},
-    {code:'OV-SB8', type:'Oven Range', desc:'Eight Burner Oven'},
-    // Combination Ovens
-    {code:'OV-SB2-CBR3', type:'Oven Range', desc:'Oven with Two Open Burners & 300mm Char Broiler'},
-    {code:'OV-SB2-GRP3', type:'Oven Range', desc:'Oven with Two Open Burners & 300mm Grill Plate'},
-    {code:'OV-GRP6', type:'Oven Range', desc:'Oven with 600mm Grill Plate'},
-    {code:'OV-SB4-CBR3', type:'Oven Range', desc:'Oven with Four Open Burners & 300mm Char Broiler'},
-    {code:'OV-SB4-GRP3', type:'Oven Range', desc:'Oven with Four Open Burners & 300mm Grill Plate'},
-    {code:'OV-GRP9', type:'Oven Range', desc:'Oven with 900mm Grill Plate'},
-    {code:'OV-SB6-GRP3', type:'Oven Range', desc:'Oven with Six Open Burners & 300mm Grill Plate'},
-    {code:'OV-SB6-CBR3', type:'Oven Range', desc:'Oven with Six Open Burners & 300mm Char Broiler'},
-    {code:'OV-SB4-GRP6', type:'Oven Range', desc:'Oven with Four Open Burners & 600mm Grill Plate'},
-    // Char Broilers
-    {code:'CBR-3', type:'Char Broiler', desc:'Char Broiler 300mm'},
-    {code:'CBR-6', type:'Char Broiler', desc:'Char Broiler 600mm'},
-    {code:'CBR-9', type:'Char Broiler', desc:'Char Broiler 900mm'},
-    {code:'CBR-12', type:'Char Broiler', desc:'Char Broiler 1200mm'},
-    {code:'CBR-3BM', type:'Char Broiler', desc:'Char Broiler 300mm Bench Mounted'},
-    {code:'CBR-6BM', type:'Char Broiler', desc:'Char Broiler 600mm Bench Mounted'},
-    {code:'CBR-9BM', type:'Char Broiler', desc:'Char Broiler 900mm Bench Mounted'},
-    {code:'CBR-12BM', type:'Char Broiler', desc:'Char Broiler 1200mm Bench Mounted'},
-    // Grill Plates
-    {code:'GRP-3', type:'Grill Plate', desc:'Grill Plate 300mm'},
-    {code:'GRP-6', type:'Grill Plate', desc:'Grill Plate 600mm'},
-    {code:'GRP-9', type:'Grill Plate', desc:'Grill Plate 900mm'},
-    {code:'GRP-12', type:'Grill Plate', desc:'Grill Plate 1200mm'},
-    {code:'GRP-3BM', type:'Grill Plate', desc:'Grill Plate 300mm Bench Mounted'},
-    {code:'GRP-6BM', type:'Grill Plate', desc:'Grill Plate 600mm Bench Mounted'},
-    {code:'GRP-9BM', type:'Grill Plate', desc:'Grill Plate 900mm Bench Mounted'},
-    {code:'GRP-12BM', type:'Grill Plate', desc:'Grill Plate 1200mm Bench Mounted'},
-    // Turbo Fryers
-    {code:'TF-451', type:'Turbo Fryer', desc:'Single Pan Turbo Fryer 450mm'},
-    {code:'TF-601', type:'Turbo Fryer', desc:'Single Pan Turbo Fryer 600mm'},
-    {code:'TF-451S', type:'Turbo Fryer', desc:'Split Pan Turbo Fryer 450mm'},
-    // Noodle/Pasta Cookers
-    {code:'NC-6', type:'Noodle / Pasta Cooker', desc:'Noodle Cooker 6 Baskets'},
-    {code:'PC-6', type:'Noodle / Pasta Cooker', desc:'Pasta Cooker 6 Baskets'},
-    {code:'NC-SW3', type:'Noodle / Pasta Cooker', desc:'Noodle Cooker with Soup Warmer insert (3 rec pots)'},
-    {code:'NC-4-SW-1', type:'Noodle / Pasta Cooker', desc:'Noodle Cooker with Soup Warmer insert (4 round + 1 rec pot)'},
-    {code:'NC-2-SW-2', type:'Noodle / Pasta Cooker', desc:'Noodle Cooker with Soup Warmer insert (2 round + 2 rec pots)'},
-    {code:'NC-CF', type:'Noodle / Pasta Cooker', desc:'Noodle Cooker with Cheung Fun insert'},
-    {code:'NC-9', type:'Noodle / Pasta Cooker', desc:'Noodle Cooker 9 Baskets'},
-    {code:'PC-9', type:'Noodle / Pasta Cooker', desc:'Pasta Cooker 9 Baskets'},
-    // Waterless Heat Exchange Steamers
-    {code:'YCJSF-1HE', type:'Waterless Steamer', desc:'Single Hole Waterless Heat Exchange Steamer'},
-    {code:'CFPSF-1HE', type:'Waterless Steamer', desc:'Single Hole Waterless Heat Exchange Steamer with Cheung Fun insert'},
-    // Waterless Pot Steamer
-    {code:'YCJSF-1', type:'Waterless Steamer', desc:'Single Hole Waterless Pot Steamer'},
-    // Waterless Stock Pot Cookers
-    {code:'UFWWSPD-1', type:'Waterless Stock Pot', desc:'Single Hole Deluxe Waterless Stock Pot'},
-    {code:'UFWWSPD-2', type:'Waterless Stock Pot', desc:'Two Hole Deluxe Waterless Stock Pot'},
-    // Waterless Hi Pac Wok Tables
-    {code:'CCF-HP1S', type:'Waterless Wok Table', desc:'Single Hole Hi Pac Wok to suit B+S Black Range Profile'},
-    {code:'CCF-HP1', type:'Waterless Wok Table', desc:'Single Hole Hi Pac Wok'},
-    {code:'CCF-HP1+1R', type:'Waterless Wok Table', desc:'Single Hole Hi Pac Wok with Right Rear Pot & Side Prep Table'},
-    {code:'CCF-HP1+1L', type:'Waterless Wok Table', desc:'Single Hole Hi Pac Wok with Left Rear Pot & Side Prep Table'},
-    {code:'CCF-HP2+1', type:'Waterless Wok Table', desc:'Double Hole Hi Pac Wok with Centre Pot and Prep Table'},
-    // Waterless Wok Tables
-    {code:'UFWWD-1', type:'Waterless Wok Table', desc:'Single Hole Deluxe Waterless Wok Table'},
-    {code:'UFWWD-2', type:'Waterless Wok Table', desc:'Two Hole Deluxe Waterless Wok Table'},
-    {code:'UFWWD-3', type:'Waterless Wok Table', desc:'Three Hole Deluxe Waterless Wok Table'},
-    {code:'BAWBT-SB2L', type:'Waterless Wok Table', desc:'Two Burner Boiling Top LHS Wok Attachment'},
-    {code:'BAWBT-SB2R', type:'Waterless Wok Table', desc:'Two Burner Boiling Top RHS Wok Attachment'}
-  ],
-
-  'K+': [
-    // Boiling Tops
-    {code:'KBT-SB2', type:'Boiling Top', desc:'Two Burner Boiling Top On Stand'},
-    {code:'KBT-SB4', type:'Boiling Top', desc:'Four Burner Boiling Top On Stand'},
-    {code:'KBT-SB6', type:'Boiling Top', desc:'Six Burner Boiling Top On Stand'},
-    {code:'KBT-SB8', type:'Boiling Top', desc:'Eight Burner Boiling Top On Stand'},
-    // Standard Ovens
-    {code:'KOV-SB4', type:'Oven Range', desc:'Four Burner Oven'},
-    {code:'KOV-SB6', type:'Oven Range', desc:'Six Burner Oven'},
-    {code:'KOV-SB8', type:'Oven Range', desc:'Eight Burner Oven'},
-    // Char Broilers
-    {code:'KCBR-3', type:'Char Broiler', desc:'300mm Char Broiler On Stand'},
-    {code:'KCBR-6', type:'Char Broiler', desc:'600mm Char Broiler On Stand'},
-    {code:'KCBR-9', type:'Char Broiler', desc:'900mm Char Broiler On Stand'},
-    {code:'KCBR-12', type:'Char Broiler', desc:'1200mm Char Broiler On Stand'},
-    // Grill Plates
-    {code:'KGRP-3', type:'Grill Plate', desc:'300mm Grill Plate On Stand'},
-    {code:'KGRP-6', type:'Grill Plate', desc:'600mm Grill Plate On Stand'},
-    {code:'KGRP-9', type:'Grill Plate', desc:'900mm Grill Plate On Stand'},
-    {code:'KGRP-12', type:'Grill Plate', desc:'1200mm Grill Plate On Stand'},
-    // Noodle/Pasta Cookers + Soup Warmers
-    {code:'KNC-6', type:'Noodle / Pasta Cooker', desc:'Six Basket Noodle Cooker'},
-    {code:'KPC-6', type:'Noodle / Pasta Cooker', desc:'Six Basket Pasta Cooker'},
-    {code:'KNC-SW3', type:'Noodle / Pasta Cooker', desc:'Three Pot Soup Warmer'},
-    {code:'KNC-9', type:'Noodle / Pasta Cooker', desc:'Nine Basket Noodle Cooker'},
-    {code:'KPC-9', type:'Noodle / Pasta Cooker', desc:'Nine Basket Pasta Cooker'},
-    {code:'KNC-CF', type:'Noodle / Pasta Cooker', desc:'Noodle Cooker with Cheung Fun insert'},
-    // Turbo Fryers
-    {code:'KTF-451', type:'Turbo Fryer', desc:'Single Pan Turbo Fryer 450mm'},
-    {code:'KTF-451S', type:'Turbo Fryer', desc:'Split Pan Turbo Fryer 450mm'},
-    {code:'KTF-601', type:'Turbo Fryer', desc:'Single Pan Turbo Fryer 600mm'},
-    // Waterless Heat Exchange Steamer
-    {code:'KYCJSF-1HE', type:'Waterless Steamer', desc:'Single Hole Waterless Heat Exchange Steamer'},
-    // Waterless Pot Steamer
-    {code:'KYCJSF-1', type:'Waterless Steamer', desc:'Single Hole Waterless Pot Steamer'},
-    // Waterless Stock Pot Cooker
-    {code:'UFWWSPK-1', type:'Waterless Stock Pot', desc:'Single Hole Deluxe Stock Pot'},
-    // Standalone Stock Pot Cookers
-    {code:'CSPK-1', type:'Waterless Stock Pot', desc:'Standalone Stock Pot Cooker'},
-    // Waterless Wok Tables
-    {code:'UFWWK-1', type:'Waterless Wok Table', desc:'Single Hole Deluxe Waterless Wok Table'},
-    {code:'UFWWK-2', type:'Waterless Wok Table', desc:'Two Hole Deluxe Waterless Wok Table'},
-    {code:'UFWWK-3', type:'Waterless Wok Table', desc:'Three Hole Deluxe Waterless Wok Table'},
-    {code:'KAWBT-SB2L', type:'Waterless Wok Table', desc:'Two Burner Boiling Top LHS Wok Attachment'},
-    {code:'KAWBT-SB2R', type:'Waterless Wok Table', desc:'Two Burner Boiling Top RHS Wok Attachment'},
-    // Duck Oven
-    {code:'DR-800', type:'Duck Oven', desc:'Duck Oven 800mm'}
-  ],
-
-  'Rapid': [
-    // Gas Fryers
-    {code:'RF-1', type:'Gas Fryer', desc:'Single Pan Rapid Gas Fryer'},
-    {code:'RF-400', type:'Gas Fryer', desc:'Single Pan Two Basket Rapid Gas Fryer'},
-    {code:'RF-600', type:'Gas Fryer', desc:'Single Pan Three Basket Rapid Gas Fryer'},
-    // Electric Fryers
-    {code:'RF-1E', type:'Electric Fryer', desc:'Single Pan Two Basket Rapid Electric Fryer'},
-    {code:'RF-2E', type:'Electric Fryer', desc:'Two Pan Four Basket Rapid Electric Fryer'},
-    {code:'RF-3E', type:'Electric Fryer', desc:'Three Pan Six Basket Rapid Electric Fryer'}
-  ],
-
-  'SCooker': [
-    // Induction Boiling Tops
-    {code:'HLBZ2N-C7', type:'Induction Boiling Top', desc:'Induction Full Length Glass Two-Zone Boiling Top'},
-    {code:'HLBZ4N-C14', type:'Induction Boiling Top', desc:'Induction Full Length Glass Four-Zone Boiling Top'},
-    {code:'HLBZ6N-C21', type:'Induction Boiling Top', desc:'Induction Full Length Glass Six-Zone Boiling Top'},
-    {code:'HLBZJ4N-C19', type:'Induction Boiling Top With Oven', desc:'Induction Full Length Glass Four-Zone Boiling Top With Oven'},
-    {code:'HLBZJ6N-C26', type:'Induction Boiling Top With Oven', desc:'Induction Full Length Glass Six-Zone Boiling Top With Oven'},
-    // Induction Griddles
-    {code:'HLKP4N-C6', type:'Induction Griddle (Grooved)', desc:'Induction Grooved Griddle Plate 400mm'},
-    {code:'HLKP6N-C6', type:'Induction Griddle (Grooved)', desc:'Induction Grooved Griddle Plate 600mm'},
-    {code:'HLKP8N-C9', type:'Induction Griddle (Grooved)', desc:'Induction Grooved Griddle Plate 800mm'},
-    {code:'HLKP9N-C9', type:'Induction Griddle (Grooved)', desc:'Induction Grooved Griddle Plate 900mm'},
-    {code:'HLKP12N-C12', type:'Induction Griddle (Grooved)', desc:'Induction Grooved Griddle Plate 1200mm'},
-    {code:'HLPP4N-C6', type:'Induction Griddle (Smooth)', desc:'Induction Smooth Griddle Plate 400mm'},
-    {code:'HLPP6N-C6', type:'Induction Griddle (Smooth)', desc:'Induction Smooth Griddle Plate 600mm'},
-    {code:'HLPP8N-C9', type:'Induction Griddle (Smooth)', desc:'Induction Smooth Griddle Plate 800mm'},
-    {code:'HLPP9N-C9', type:'Induction Griddle (Smooth)', desc:'Induction Smooth Griddle Plate 900mm'},
-    {code:'HLPP12N-C12', type:'Induction Griddle (Smooth)', desc:'Induction Smooth Griddle Plate 1200mm'},
-    // Induction Fryer
-    {code:'HLYZDN-C12', type:'Induction Fryer', desc:'Induction Single Pan Two Basket Fryer'},
-    // Induction Pasta/Noodle Cookers and Bain Marie
-    {code:'HLYFDN-C12', type:'Induction Pasta Cooker', desc:'Induction Single Pan Six Basket Pasta Cooker'},
-    {code:'HLZMDN6-C12', type:'Induction Noodle Cooker', desc:'Induction Single Pan Six Basket Noodle Cooker'},
-    {code:'HLBWDN-B3', type:'Induction Bain Marie', desc:'Induction Bain Marie 2 Pan Inserts'},
-    // Induction Woks
-    {code:'HLXCDN-C8', type:'Induction Wok', desc:'Induction Single Wok – Standard Ring 600mm'},
-    {code:'HLXCDN-C12', type:'Induction Wok', desc:'Induction Single Wok – Standard Ring 800mm'},
-    {code:'HLXC2N-C16', type:'Induction Wok', desc:'Induction Double Wok – Standard Ring 16kW'},
-    {code:'HLXC2N-C24', type:'Induction Wok', desc:'Induction Double Wok – Standard Ring 24kW'},
-    {code:'HLXCDQ7-C12', type:'Induction Wok', desc:'Induction Single Wok – Large Ring'},
-    {code:'HLXC2Q-C24', type:'Induction Wok', desc:'Induction Double Wok – Large Ring'},
-    {code:'HLXCDQ1-C14', type:'Induction Wok', desc:'Induction Single Wok With Rear Warming Pot – Large Ring'},
-    // Induction Pan Noodle Cooker
-    {code:'HLZMDN5G-C10', type:'Induction Pan Noodle Cooker', desc:'Induction Pan Noodle Cooker 5 Baskets'},
-    // Induction Steamer
-    {code:'HLZLDN-C20', type:'Induction Steamer', desc:'Induction Steamer'},
-    // Induction Multi-Functional Cooker
-    {code:'HLDG8N-C8', type:'Induction Multi-Functional Cooker', desc:'Induction Multi-Functional Cooker'},
-    // Induction Stock Pot Cooker
-    {code:'HLTLD-C12', type:'Induction Stock Pot', desc:'Induction Stock Pot Cooker With 600mm Stainless Steel Pot'},
-    // Electric Infrared Boiling Tops
-    {code:'DLGB2N-C4D8', type:'Electric Infrared Top', desc:'Electric Infrared Two-Zone Boiling Top'},
-    {code:'DLGB4N-C9D6', type:'Electric Infrared Top', desc:'Electric Infrared Four-Zone Boiling Top'},
-    {code:'DLGB6N-C14D4', type:'Electric Infrared Top', desc:'Electric Infrared Six-Zone Boiling Top'},
-    {code:'DLGBJ4N-C14D6', type:'Electric Infrared Top With Oven', desc:'Electric Infrared Four-Zone Boiling Top With Oven'},
-    {code:'DLGBJ6N-C19D4', type:'Electric Infrared Top With Oven', desc:'Electric Infrared Six-Zone Boiling Top With Oven'},
-    // Electric Solid Plate Boiling Tops
-    {code:'DLZS2N-C4D6', type:'Electric Boiling Top', desc:'Electric Solid Plate Two-Zone Boiling Top'},
-    {code:'DLZS4N-C9D2', type:'Electric Boiling Top', desc:'Electric Solid Plate Four-Zone Boiling Top'},
-    {code:'DLZS6N-C13D8', type:'Electric Boiling Top', desc:'Electric Solid Plate Six-Zone Boiling Top'},
-    {code:'DLZSJ4N-C14D2', type:'Electric Boiling Top With Oven', desc:'Electric Solid Plate Four-Zone Boiling Top With Oven'},
-    {code:'DLZSJ6N-C18D8', type:'Electric Boiling Top With Oven', desc:'Electric Solid Plate Six-Zone Boiling Top With Oven'},
-    // Electric Griddles
-    {code:'DLPP4N-C4D5', type:'Electric Griddle', desc:'Electric Smooth Griddle Plate 400mm'},
-    {code:'DLPP8N-C9', type:'Electric Griddle', desc:'Electric Smooth Griddle Plate 800mm'},
-    {code:'DLPP12N-C13D5', type:'Electric Griddle', desc:'Electric Smooth Griddle Plate 1200mm'},
-    // Electric Fryer
-    {code:'DLYZDN2-C9', type:'Electric Fryer (SCooker)', desc:'Electric Single Pan Two Basket Fryer'},
-    // Electric Noodle/Pasta Cookers
-    {code:'DLYFDN6-C12', type:'Electric Pasta Cooker', desc:'Electric Single Pan Six Basket Pasta Cooker'},
-    {code:'DLZMDN6-C12', type:'Electric Noodle Cooker', desc:'Electric Single Pan Six Basket Noodle Cooker'}
-  ]
-};
-
-
 var TYPES = {
   'B+S Black': ['Grill Plate','Oven Range','Boiling Top','Char Broiler','Turbo Fryer',
     'Noodle / Pasta Cooker','Waterless Wok Table','Waterless Stock Pot','Waterless Steamer','Target Top'],
@@ -1146,22 +881,9 @@ var CHECKLISTS = {
 };
 
 // ── STATE ─────────────────────────────────────────────────────────────────
-var checklist = [], states = {}, flags = [], parts = [], recipients = ['clientservices@bscommercialkitchens.com'], jobs = [];
-var units = [];
-function makeUnit() {
-  return { erange:'', etype:'', model:'', serial:'', gas:'ng', warranty:'', pStatic:'', pDynamic:'', pErrorCode:'', pressureResult:null, billing:null, photos:[null,null,null,null,null] };
-}
-units.push(makeUnit());
+var checklist = [], states = {}, flags = [], recipients = [], jobs = [];
 var PHOTO_LABELS = ['Before service','After service','Non-warranty issue','Gas connections','Other'];
-
-// Load persisted jobs from localStorage
-try {
-  var _stored = localStorage.getItem('bs_jobs_v2');
-  if (_stored) jobs = JSON.parse(_stored);
-} catch(e) { jobs = []; }
-
-var HISTORY_PASSWORD = 'BShistory2026';
-var SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyO9NlhJev1GglqoDyDRcz8HlIbWcwU8oPQc1XvyTcKzeTGJlbjViwrvM9-C-mOpPZ3fQ/exec';
+var photos = [null,null,null,null,null];
 
 // ── NAV ───────────────────────────────────────────────────────────────────
 function go(tab) {
@@ -1170,283 +892,111 @@ function go(tab) {
   document.getElementById('screen-'+tab).classList.add('active');
   document.getElementById('tab-'+tab).classList.add('active');
   window.scrollTo(0,0);
-  if (tab === 'send') {
-    renderBilling();
-  }
-  if (tab === 'history') {
-    if (!_historyUnlocked) {
-      document.getElementById('hist-pw-overlay').style.display = 'flex';
-      setTimeout(function(){ document.getElementById('hist-pw-input').focus(); }, 100);
-    } else {
-      renderHistoryList();
-    }
-  }
 }
 
-// ── EQUIPMENT (multi-unit) ────────────────────────────────────────────────
-function renderUnits() {
-  var c = document.getElementById('units-container');
-  c.innerHTML = units.map(function(u, i) {
-    var rangeOpts = ['B+S Black','K+','Rapid','SCooker'].map(function(r){
-      return '<option' + (u.erange===r?' selected':'') + '>' + r + '</option>';
-    }).join('');
-    var typeOpts = '<option value="">Select...</option>' + (TYPES[u.erange]||[]).map(function(t){
-      return '<option' + (u.etype===t?' selected':'') + '>' + t + '</option>';
-    }).join('');
-
-    var isSCooker = (u.erange === 'SCooker');
-    var preflightHTML;
-    if (isSCooker) {
-      function sel(val, opt){ return val===opt ? ' selected' : ''; }
-      preflightHTML =
-        '<div class="card-head"><div class="card-icon">⚡</div>' +
-          '<div><div class="card-title">Pre-Start Electrical Checks</div>' +
-          '<div class="card-sub">Confirm before starting service</div></div></div>' +
-        '<div class="card-body">' +
-          '<div class="field"><label class="lbl">Power On — Unit Starts Normally *</label>' +
-            '<select class="inp" id="p-static-'+i+'" onchange="saveUnitFields('+i+')">' +
-              '<option value="">Select...</option>' +
-              '<option'+sel(u.pStatic,'Yes — normal startup')+'>Yes — normal startup</option>' +
-              '<option'+sel(u.pStatic,'No — fails to start')+'>No — fails to start</option>' +
-              '<option'+sel(u.pStatic,'Partial — starts with errors')+'>Partial — starts with errors</option>' +
-            '</select></div>' +
-          '<div class="field"><label class="lbl">Display / Indicator Lights *</label>' +
-            '<select class="inp" id="p-dynamic-'+i+'" onchange="saveUnitFields('+i+')">' +
-              '<option value="">Select...</option>' +
-              '<option'+sel(u.pDynamic,'All lights normal')+'>All lights normal</option>' +
-              '<option'+sel(u.pDynamic,'Error code displayed')+'>Error code displayed</option>' +
-              '<option'+sel(u.pDynamic,'No display / blank screen')+'>No display / blank screen</option>' +
-              '<option'+sel(u.pDynamic,'Partial display')+'>Partial display</option>' +
-            '</select></div>' +
-          '<div class="field"><label class="lbl">Error Code on Display (if any)</label>' +
-            '<input class="inp" id="p-errorcode-'+i+'" type="text" value="'+(u.pErrorCode||'')+'" placeholder="e.g. E6, EA — leave blank if none" style="text-transform:uppercase; letter-spacing:1px;" onchange="saveUnitFields('+i+')"></div>' +
-        '</div>';
-    } else {
-      function psel(val, opt){ return val===opt ? ' active-' + (opt==='pass'?'warranty':'chargeable') : ''; }
-      preflightHTML =
-        '<div class="card-head"><div class="card-icon">📊</div>' +
-          '<div><div class="card-title">Gas Pressure</div>' +
-          '<div class="card-sub">Record before starting</div></div></div>' +
-        '<div class="card-body">' +
-          '<div class="row2">' +
-            '<div class="field"><label class="lbl">Static (kPa) *</label>' +
-              '<input class="inp" id="p-static-'+i+'" type="number" step="0.01" value="'+(u.pStatic||'')+'" placeholder="e.g. 2.75" inputmode="decimal" onchange="saveUnitFields('+i+')"></div>' +
-            '<div class="field"><label class="lbl">Dynamic (kPa) *</label>' +
-              '<input class="inp" id="p-dynamic-'+i+'" type="number" step="0.01" value="'+(u.pDynamic||'')+'" placeholder="e.g. 2.50" inputmode="decimal" onchange="saveUnitFields('+i+')"></div>' +
-          '</div>' +
-          '<div class="field"><label class="lbl">Pressure Test Result *</label>' +
-            '<div class="row2">' +
-              '<button type="button" class="btn-toggle' + psel(u.pressureResult,'pass') + '" onclick="setPressureResult('+i+',\'pass\')">✓ Pass<br><span style="font-size:10px;font-weight:400;">Within spec</span></button>' +
-              '<button type="button" class="btn-toggle' + psel(u.pressureResult,'fail') + '" onclick="setPressureResult('+i+',\'fail\')">✗ Fail<br><span style="font-size:10px;font-weight:400;">Out of spec</span></button>' +
-            '</div></div>' +
-        '</div>';
-    }
-
-    var gasWarrantyRow;
-    if (isSCooker) {
-      gasWarrantyRow =
-        '<div class="row2">' +
-          '<div class="field" style="grid-column:1 / -1;"><label class="lbl">Warranty</label>' +
-            '<select class="inp" id="warranty-'+i+'" onchange="saveUnitFields('+i+')">' +
-              '<option value=""'+(u.warranty===''?' selected':'')+'>Unknown</option>' +
-              '<option'+(u.warranty==='In Warranty'?' selected':'')+'>In Warranty</option>' +
-              '<option'+(u.warranty==='Out of Warranty'?' selected':'')+'>Out of Warranty</option>' +
-            '</select></div>' +
-        '</div>';
-    } else {
-      gasWarrantyRow =
-        '<div class="row2">' +
-          '<div class="field"><label class="lbl">Gas Type</label>' +
-            '<select class="inp" id="gas-'+i+'" onchange="saveUnitFields('+i+')">' +
-              '<option value="ng"'+(u.gas==='ng'?' selected':'')+'>Natural Gas (NG)</option>' +
-              '<option value="lpg"'+(u.gas==='lpg'?' selected':'')+'>LPG</option>' +
-            '</select></div>' +
-          '<div class="field"><label class="lbl">Warranty</label>' +
-            '<select class="inp" id="warranty-'+i+'" onchange="saveUnitFields('+i+')">' +
-              '<option value=""'+(u.warranty===''?' selected':'')+'>Unknown</option>' +
-              '<option'+(u.warranty==='In Warranty'?' selected':'')+'>In Warranty</option>' +
-              '<option'+(u.warranty==='Out of Warranty'?' selected':'')+'>Out of Warranty</option>' +
-            '</select></div>' +
-        '</div>';
-    }
-
-    var header = units.length > 1
-      ? '<div class="card-head"><div class="card-icon">⚙️</div>' +
-          '<div><div class="card-title">Unit ' + (i+1) + '</div></div>' +
-          (units.length > 1 ? '<button onclick="removeUnit('+i+')" style="margin-left:auto;background:none;border:none;font-size:18px;color:var(--red);cursor:pointer;">✕</button>' : '') +
-        '</div>'
-      : '<div class="card-head"><div class="card-icon">⚙️</div><div><div class="card-title">Equipment</div></div></div>';
-
-    return '<div class="card">' + header +
-      '<div class="card-body">' +
-        '<div class="row2">' +
-          '<div class="field"><label class="lbl">Range *</label>' +
-            '<select class="inp" id="erange-'+i+'" onchange="onUnitRangeChange('+i+')">' +
-              '<option value="">Select...</option>' + rangeOpts +
-            '</select></div>' +
-          '<div class="field"><label class="lbl">Type *</label>' +
-            '<select class="inp" id="etype-'+i+'" onchange="onUnitTypeChange('+i+')">' + typeOpts + '</select></div>' +
-        '</div>' +
-        '<div class="row2">' +
-          '<div class="field"><label class="lbl">Model Code *</label>' +
-            '<input class="inp" id="model-'+i+'" type="text" value="'+(u.model||'')+'" placeholder="e.g. GRP-6" list="model-codes-list-'+i+'" autocomplete="off" onchange="saveUnitFields('+i+')"></div>' +
-            '<datalist id="model-codes-list-'+i+'"></datalist>' +
-          '<div class="field"><label class="lbl">Serial / Mfg Date *</label>' +
-            '<input class="inp" id="serial-'+i+'" type="text" value="'+(u.serial||'')+'" placeholder="Serial or date" onchange="saveUnitFields('+i+')"></div>' +
-        '</div>' +
-        gasWarrantyRow +
-      '</div>' +
-    '</div>' +
-    '<div class="card">' + preflightHTML + '</div>';
-  }).join('');
-
-  // Populate model code datalists for units with a range already selected
-  units.forEach(function(u, i){ populateModelCodes(i); });
-}
-
-function addUnit() {
-  units.push(makeUnit());
-  renderUnits();
-  renderPhotoGrids();
-}
-
-function removeUnit(i) {
-  if (units.length <= 1) return;
-  units.splice(i, 1);
-  renderUnits();
-  renderPhotoGrids();
-}
-
-// Save free-text/select field values back into the units array (called on change)
-function saveUnitFields(i) {
-  var u = units[i];
-  function gv(id){ var el = document.getElementById(id); return el ? el.value : ''; }
-  u.model    = gv('model-'+i);
-  u.serial   = gv('serial-'+i);
-  u.gas      = gv('gas-'+i) || u.gas;
-  u.warranty = gv('warranty-'+i);
-  u.pStatic    = gv('p-static-'+i);
-  u.pDynamic   = gv('p-dynamic-'+i);
-  u.pErrorCode = gv('p-errorcode-'+i);
-}
-
-function populateModelCodes(i) {
-  var u = units[i];
-  var dl = document.getElementById('model-codes-list-'+i);
-  if (!dl) return;
-  dl.innerHTML = '';
-  (MODEL_CODES[u.erange]||[]).forEach(function(m){
-    if (!u.etype || m.type === null || m.type === u.etype) {
-      var o = document.createElement('option');
-      o.value = m.code;
-      o.label = m.code + ' — ' + m.desc;
-      dl.appendChild(o);
-    }
+// ── EQUIPMENT ─────────────────────────────────────────────────────────────
+function onRangeChange() {
+  var r = document.getElementById('erange').value;
+  var sel = document.getElementById('etype');
+  sel.innerHTML = '<option value="">Select...</option>';
+  (TYPES[r]||[]).forEach(function(t){
+    var o = document.createElement('option'); o.value = o.textContent = t; sel.appendChild(o);
   });
+  checklist = []; states = {};
+
+  var gasField = document.getElementById('gas').parentElement;
+  var warrantyField = document.getElementById('warranty').parentElement;
+
+  if (r === 'SCooker') {
+    // Hide gas type, show N/A for warranty label change
+    gasField.style.display = 'none';
+    warrantyField.style.display = 'none';
+
+    // Swap preflight card to electrical checks
+    document.getElementById('preflight-icon').textContent = '⚡';
+    document.getElementById('preflight-title').textContent = 'Pre-Start Electrical Checks';
+    document.getElementById('preflight-sub').textContent = 'Confirm before starting service';
+    document.getElementById('preflight-body').innerHTML =
+      '<div class="field">' +
+        '<label class="lbl">Power On — Unit Starts Normally</label>' +
+        '<select class="inp" id="p-static">' +
+          '<option value="">Select...</option>' +
+          '<option>Yes — normal startup</option>' +
+          '<option>No — fails to start</option>' +
+          '<option>Partial — starts with errors</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="field">' +
+        '<label class="lbl">Display / Indicator Lights</label>' +
+        '<select class="inp" id="p-dynamic">' +
+          '<option value="">Select...</option>' +
+          '<option>All lights normal</option>' +
+          '<option>Error code displayed</option>' +
+          '<option>No display / blank screen</option>' +
+          '<option>Partial display</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="field">' +
+        '<label class="lbl">Error Code on Display (if any)</label>' +
+        '<input class="inp" id="p-errorcode" type="text" placeholder="e.g. E6, EA — leave blank if none" style="text-transform:uppercase; letter-spacing:1px;">' +
+      '</div>';
+  } else {
+    // Restore gas fields
+    gasField.style.display = '';
+    warrantyField.style.display = '';
+    gasField.style.opacity = '1';
+
+    document.getElementById('preflight-icon').textContent = '📊';
+    document.getElementById('preflight-title').textContent = 'Gas Pressure';
+    document.getElementById('preflight-sub').textContent = 'Record before starting';
+    document.getElementById('preflight-body').innerHTML =
+      '<div class="row2">' +
+        '<div class="field"><label class="lbl">Static (kPa)</label>' +
+          '<input class="inp" id="p-static" type="number" step="0.01" placeholder="e.g. 2.75" inputmode="decimal"></div>' +
+        '<div class="field"><label class="lbl">Dynamic (kPa)</label>' +
+          '<input class="inp" id="p-dynamic" type="number" step="0.01" placeholder="e.g. 2.50" inputmode="decimal"></div>' +
+      '</div>';
+  }
 }
 
-function onUnitRangeChange(i) {
-  var u = units[i];
-  u.erange = document.getElementById('erange-'+i).value;
-  u.etype  = '';
-  u.model  = '';
-  u.serial = '';
-  u.pStatic = ''; u.pDynamic = ''; u.pErrorCode = '';
-  renderUnits();
-  renderPhotoGrids();
-}
-
-function onUnitTypeChange(i) {
-  var u = units[i];
-  u.etype = document.getElementById('etype-'+i).value;
-  saveUnitFields(i);
-  populateModelCodes(i);
-  renderPhotoGrids();
+function onTypeChange() {
+  var t = document.getElementById('etype').value;
+  checklist = CHECKLISTS[t] || [];
+  states = {};
+  checklist.forEach(function(_,i){ states[i] = null; });
 }
 
 // ── CHECKLIST ─────────────────────────────────────────────────────────────
-function validateJobFields() {
-  var missing = [];
-  function check(id, label) {
-    var el = document.getElementById(id);
-    if (!el || !el.value || !el.value.toString().trim()) missing.push(label);
-  }
-  check('sonum',   'Service Order Number');
-  check('biz',     'Business Name');
-  check('contact', 'Contact Person');
-  check('phone',   'Phone');
-  check('address', 'Address');
-  check('sdate',   'Service Date');
-  check('tech',    'Technician');
-
-  units.forEach(function(u, i) {
-    saveUnitFields(i);
-    var prefix = units.length > 1 ? 'Unit ' + (i+1) + ' — ' : '';
-    check('erange-'+i,  prefix + 'Equipment Range');
-    check('etype-'+i,   prefix + 'Equipment Type');
-    check('model-'+i,   prefix + 'Model Code');
-    check('serial-'+i,  prefix + 'Serial / Mfg Date');
-    check('p-static-'+i,  prefix + 'Static Pressure');
-    check('p-dynamic-'+i, prefix + 'Dynamic Pressure');
-    if (u.erange !== 'SCooker' && !u.pressureResult) {
-      missing.push(prefix + 'Pressure Test Result (Pass/Fail)');
-    }
-  });
-
-  if (missing.length) {
-    alert('Please fill in the following before continuing:\n\n• ' + missing.join('\n• '));
-    return false;
-  }
-  return true;
-}
-
 function startChecklist() {
-  if (!validateJobFields()) return;
-  // Build combined checklist tagged with unitIndex
-  checklist = [];
-  states = {};
-  units.forEach(function(u, ui) {
-    (CHECKLISTS[u.etype] || []).forEach(function(item){
-      checklist.push({ t: item.t, c: item.c, unitIndex: ui });
-    });
-  });
-  checklist.forEach(function(_,i){ states[i] = null; });
+  if (!document.getElementById('biz').value.trim()) { alert('Please enter the business name.'); return; }
+  if (!document.getElementById('erange').value)     { alert('Please select the equipment range.'); return; }
+  if (!document.getElementById('etype').value)      { alert('Please select the equipment type.'); return; }
+  if (!checklist.length) onTypeChange();
   renderChecklist();
   go('checklist');
 }
 
 function renderChecklist() {
+  var type  = document.getElementById('etype').value;
+  var range = document.getElementById('erange').value;
+  document.getElementById('cl-title').textContent = range + ' – ' + type;
   var wrap = document.getElementById('cl-items');
-  if (units.length === 1) {
-    document.getElementById('cl-title').textContent = units[0].erange + ' – ' + units[0].etype;
-  } else {
-    document.getElementById('cl-title').textContent = units.length + ' Units';
-  }
   if (!checklist.length) {
     wrap.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-txt">Complete Job tab first</div></div>';
     updateProgress(); return;
   }
-  var html = '';
-  units.forEach(function(u, ui) {
-    if (units.length > 1) {
-      html += '<div style="font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:0.6px;margin:14px 0 6px;padding:0 2px;">' +
-        'Unit ' + (ui+1) + ' — ' + u.erange + ' ' + u.etype + (u.model ? ' (' + u.model + ')' : '') +
-        '</div>';
-    }
-    html += '<div class="card"><div>';
-    checklist.forEach(function(item, i) {
-      if (item.unitIndex !== ui) return;
-      var s = states[i];
-      html += '<div class="cl-item">' +
-        '<div class="cl-label' + (item.c?' crit':'') + '">' + item.t + '</div>' +
-        '<div class="cl-btns">' +
-        '<button class="cl-btn' + (s==='pass'?' pass':'') + '" onclick="setState('+i+',\'pass\')">✓</button>' +
-        '<button class="cl-btn' + (s==='fail'?' fail':'') + '" onclick="setState('+i+',\'fail\')">✗</button>' +
-        '<button class="cl-btn' + (s==='na'?' na':'')     + '" onclick="setState('+i+',\'na\')">N/A</button>' +
-        '</div></div>';
-    });
-    html += '</div></div>';
+  var html = '<div class="card"><div>';
+  checklist.forEach(function(item, i) {
+    var s = states[i];
+    html += '<div class="cl-item">' +
+      '<div class="cl-label' + (item.c?' crit':'') + '">' + item.t + '</div>' +
+      '<div class="cl-btns">' +
+      '<button class="cl-btn' + (s==='pass'?' pass':'') + '" onclick="setState('+i+',\'pass\')">✓</button>' +
+      '<button class="cl-btn' + (s==='fail'?' fail':'') + '" onclick="setState('+i+',\'fail\')">✗</button>' +
+      '<button class="cl-btn' + (s==='na'?' na':'')     + '" onclick="setState('+i+',\'na\')">N/A</button>' +
+      '</div></div>';
   });
+  html += '</div></div>';
   wrap.innerHTML = html;
   updateProgress();
 }
@@ -1494,66 +1044,25 @@ function renderFlags() {
   }).join('');
 }
 
-// ── SPARE PARTS ───────────────────────────────────────────────────────────
-function addPart() {
-  var nameInp = document.getElementById('part-name-in');
-  var qtyInp  = document.getElementById('part-qty-in');
-  var codeInp = document.getElementById('part-code-in');
-  var name = nameInp.value.trim();
-  if (!name) return;
-  var qty  = parseInt(qtyInp.value, 10) || 1;
-  var code = codeInp.value.trim();
-  parts.push({ name: name, qty: qty, code: code });
-  nameInp.value = ''; codeInp.value = ''; qtyInp.value = '1';
-  renderParts();
-}
-
-function removePart(i) { parts.splice(i,1); renderParts(); }
-
-function renderParts() {
-  var c = document.getElementById('parts-list');
-  if (!parts.length) { c.innerHTML = ''; return; }
-  c.innerHTML = parts.map(function(p,i){
-    return '<div class="part-item">' +
-      '<div style="flex:1"><div class="part-txt">' + p.qty + ' × ' + p.name + '</div>' +
-      (p.code ? '<div class="part-meta">Part #: ' + p.code + '</div>' : '') + '</div>' +
-      '<button onclick="removePart('+i+')" style="background:none;border:none;font-size:18px;color:var(--red);cursor:pointer;">✕</button>' +
-      '</div>';
+// ── PHOTOS ────────────────────────────────────────────────────────────────
+function renderPhotoGrid() {
+  var grid = document.getElementById('photo-grid');
+  grid.innerHTML = PHOTO_LABELS.map(function(label, i){
+    return '<label class="photo-slot" id="pslot-'+i+'">' +
+      (photos[i]
+        ? '<img src="'+photos[i]+'">'
+        : '<span style="font-size:22px;">📷</span><span style="font-size:10px;color:var(--muted);text-align:center;padding:0 6px;">Tap to take photo</span>'
+      ) +
+      '<input type="file" accept="image/*" capture="environment" style="display:none;" onchange="handlePhoto(event,'+i+')">' +
+      '</label>';
   }).join('');
 }
-function renderPhotoGrids() {
-  var c = document.getElementById('photos-container');
-  if (!c) return;
-  c.innerHTML = units.map(function(u, ui) {
-    var title = units.length > 1
-      ? 'Photos — Unit ' + (ui+1) + (u.erange ? ' (' + u.erange + (u.etype ? ' ' + u.etype : '') + ')' : '')
-      : 'Photos';
-    var grid = '<div class="photo-grid">' + PHOTO_LABELS.map(function(label, i){
-      var p = u.photos[i];
-      return '<label class="photo-slot" id="pslot-'+ui+'-'+i+'">' +
-        (p
-          ? '<img src="'+p+'">' +
-            '<div class="photo-slot-overlay">' + label + '</div>'
-          : '<span style="font-size:22px;">📷</span><span style="font-size:10px;color:var(--muted);text-align:center;padding:0 6px;">' + label + '</span>'
-        ) +
-        '<input type="file" accept="image/*" capture="environment" style="display:none;" onchange="handlePhoto(event,'+ui+','+i+')">' +
-        '</label>';
-    }).join('') + '</div>';
+renderPhotoGrid();
 
-    return '<div class="card">' +
-      '<div class="card-head"><div class="card-icon">📷</div>' +
-        '<div><div class="card-title">' + title + '</div>' +
-        '<div class="card-sub">Photos are included automatically in the email</div></div>' +
-      '</div>' +
-      '<div class="card-body">' + grid + '</div>' +
-    '</div>';
-  }).join('');
-}
-
-function handlePhoto(e, ui, i) {
+function handlePhoto(e, i) {
   var file = e.target.files[0]; if (!file) return;
   var r = new FileReader();
-  r.onload = function(ev){ units[ui].photos[i] = ev.target.result; renderPhotoGrids(); };
+  r.onload = function(ev){ photos[i] = ev.target.result; renderPhotoGrid(); };
   r.readAsDataURL(file);
 }
 
@@ -1567,69 +1076,28 @@ function addRecipient() {
   renderRecipients();
 }
 
-function removeRecipient(i) {
-  if (recipients[i] === DEFAULT_RECIPIENT) return;
-  recipients.splice(i,1);
-  renderRecipients();
-}
-
-var DEFAULT_RECIPIENT = 'clientservices@bscommercialkitchens.com';
-
-function renderBilling() {
-  var c = document.getElementById('billing-container');
-  c.innerHTML = units.map(function(u, i) {
-    var label = units.length > 1
-      ? 'Unit ' + (i+1) + ' — ' + (u.erange||'—') + ' ' + (u.etype||'') + (u.model ? ' (' + u.model + ')' : '')
-      : 'Is this job chargeable to the customer?';
-    return '<div class="card">' +
-      '<div class="card-head"><div class="card-icon">💳</div>' +
-        '<div><div class="card-title">' + (units.length > 1 ? 'Billing — Unit ' + (i+1) : 'Billing Status') + '</div>' +
-          '<div class="card-sub">' + label + '</div></div>' +
-      '</div>' +
-      '<div class="card-body">' +
-        '<div class="row2">' +
-          '<button type="button" class="btn-toggle' + (u.billing==='warranty'?' active-warranty':'') + '" onclick="setBillingStatus('+i+',\'warranty\')">🛡️ Warranty<br><span style="font-size:10px;font-weight:400;">No charge</span></button>' +
-          '<button type="button" class="btn-toggle' + (u.billing==='chargeable'?' active-chargeable':'') + '" onclick="setBillingStatus('+i+',\'chargeable\')">💵 Chargeable<br><span style="font-size:10px;font-weight:400;">Bill customer</span></button>' +
-        '</div>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-}
-
-function setBillingStatus(i, status) {
-  units[i].billing = status;
-  renderBilling();
-}
-
-function setPressureResult(i, result) {
-  units[i].pressureResult = result;
-  renderUnits();
-}
+function removeRecipient(i) { recipients.splice(i,1); renderRecipients(); }
 
 function renderRecipients() {
   var c = document.getElementById('recipients-list');
   if (!recipients.length) { c.innerHTML = ''; return; }
   c.innerHTML = recipients.map(function(r,i){
-    var isDefault = (r === DEFAULT_RECIPIENT);
     return '<div class="recipient-row">' +
-      '<input type="email" value="'+r+'" readonly' + (isDefault ? ' style="color:var(--navy);font-weight:600;"' : '') + '>' +
-      (isDefault
-        ? '<span style="padding:0 10px;font-size:11px;color:var(--muted);white-space:nowrap;">always</span>'
-        : '<button class="rm" onclick="removeRecipient('+i+')">✕</button>'
-      ) +
+      '<input type="email" value="'+r+'" readonly>' +
+      '<button class="rm" onclick="removeRecipient('+i+')">✕</button>' +
       '</div>';
   }).join('');
 }
 
-// Render default recipient and units on load
-document.addEventListener('DOMContentLoaded', function(){ renderRecipients(); renderUnits(); renderPhotoGrids(); });
-
 // ── BUILD REPORT ──────────────────────────────────────────────────────────
 function buildReport() {
-  function v(id){ var el = document.getElementById(id); return (el && el.value) ? el.value : '—'; }
+  function v(id){ return document.getElementById(id).value || '—'; }
   var d = v('sdate') !== '—'
     ? new Date(v('sdate')).toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'})
     : '—';
+  var gas = v('gas') === 'ng' ? 'Natural Gas (NG)' : 'LPG';
+  var pass=0, fail=0, na=0;
+  Object.values(states).forEach(function(s){ if(s==='pass')pass++; else if(s==='fail')fail++; else if(s==='na')na++; });
 
   var lines = [];
   lines.push('B+S COMMERCIAL KITCHENS — SERVICE REPORT');
@@ -1637,70 +1105,41 @@ function buildReport() {
   lines.push('');
   lines.push('JOB DETAILS');
   lines.push('─'.repeat(30));
-  lines.push('Service Order #: ' + v('sonum'));
   lines.push('Business:        ' + v('biz'));
   lines.push('Address:         ' + v('address'));
   lines.push('Contact:         ' + v('contact') + '   ' + v('phone'));
   lines.push('Service Date:    ' + d);
   lines.push('Technician:      ' + v('tech'));
-
-  units.forEach(function(u, ui) {
-    var unitLabel = units.length > 1 ? ' - UNIT ' + (ui+1) : '';
-    var gas = u.gas === 'ng' ? 'Natural Gas (NG)' : 'LPG';
-    var pass=0, fail=0, na=0;
-    checklist.forEach(function(item, i){
-      if (item.unitIndex !== ui) return;
-      var s = states[i];
-      if (s==='pass') pass++; else if (s==='fail') fail++; else if (s==='na') na++;
-    });
-
-    lines.push('');
-    lines.push('EQUIPMENT' + unitLabel);
-    lines.push('─'.repeat(30));
-    lines.push('Range:           ' + (u.erange || '—'));
-    lines.push('Type:            ' + (u.etype || '—'));
-    lines.push('Model:           ' + (u.model || '—'));
-    lines.push('Serial / Mfg:    ' + (u.serial || '—'));
-    if (u.erange !== 'SCooker') {
-      lines.push('Gas Type:        ' + gas);
-    }
-    lines.push('Warranty:        ' + (u.warranty || 'Unknown'));
-    if (u.erange === 'SCooker') {
-      lines.push('Power On:        ' + (u.pStatic || '—'));
-      lines.push('Display Lights:  ' + (u.pDynamic || '—'));
-      if (u.pErrorCode) lines.push('Error Code:      ' + u.pErrorCode);
-    } else {
-      lines.push('Static Pressure: ' + (u.pStatic || '—') + ' kPa');
-      lines.push('Dynamic Press.:  ' + (u.pDynamic || '—') + ' kPa');
-      if (u.pressureResult === 'pass') {
-        lines.push('Pressure Test:   ✓ PASS — within specification');
-      } else if (u.pressureResult === 'fail') {
-        lines.push('Pressure Test:   ✗ FAIL — out of specification');
-        lines.push('');
-        lines.push('⚠ The customer should contact a licensed plumber for further investigation, or the plumber that installed the unit.');
-      }
-    }
-
-    lines.push('');
-    lines.push('CHECKLIST' + unitLabel + '  ✓ ' + pass + ' Pass  |  ✗ ' + fail + ' Fail  |  ' + na + ' N/A');
-    lines.push('─'.repeat(46));
-    checklist.forEach(function(item,i){
-      if (item.unitIndex !== ui) return;
-      var s = states[i];
-      var lbl = s==='pass' ? '✓ Pass  ' : s==='fail' ? '✗ FAIL  ' : s==='na' ? 'N/A     ' : '—       ';
-      lines.push(lbl + ' ' + item.t);
-    });
-
-    lines.push('');
-    lines.push('BILLING STATUS' + unitLabel);
-    lines.push('─'.repeat(30));
-    if (u.billing === 'warranty') {
-      lines.push('🛡️ WARRANTY — No charge to customer');
-    } else if (u.billing === 'chargeable') {
-      lines.push('💵 CHARGEABLE — Bill customer for this job');
-    } else {
-      lines.push('⚠ NOT SPECIFIED — please confirm billing status');
-    }
+  lines.push('');
+  lines.push('EQUIPMENT');
+  lines.push('─'.repeat(30));
+  lines.push('Range:           ' + v('erange'));
+  lines.push('Type:            ' + v('etype'));
+  lines.push('Model:           ' + v('model'));
+  lines.push('Serial / Mfg:    ' + v('serial'));
+  if (v('erange') !== 'SCooker') {
+    lines.push('Gas Type:        ' + gas);
+  }
+  if (v('erange') !== 'SCooker') {
+    lines.push('Warranty:        ' + (v('warranty') === '—' ? 'Unknown' : v('warranty')));
+  }
+  var range = v('erange');
+  if (range === 'SCooker') {
+    lines.push('Power On:        ' + v('p-static'));
+    lines.push('Display Lights:  ' + v('p-dynamic'));
+    var errCode = document.getElementById('p-errorcode') ? document.getElementById('p-errorcode').value : '';
+    if (errCode) lines.push('Error Code:      ' + errCode);
+  } else {
+    lines.push('Static Pressure: ' + v('p-static') + ' kPa');
+    lines.push('Dynamic Press.:  ' + v('p-dynamic') + ' kPa');
+  }
+  lines.push('');
+  lines.push('CHECKLIST  ✓ ' + pass + ' Pass  |  ✗ ' + fail + ' Fail  |  ' + na + ' N/A');
+  lines.push('─'.repeat(46));
+  checklist.forEach(function(item,i){
+    var s = states[i];
+    var lbl = s==='pass' ? '✓ Pass  ' : s==='fail' ? '✗ FAIL  ' : s==='na' ? 'N/A     ' : '—       ';
+    lines.push(lbl + ' ' + item.t);
   });
 
   if (flags.length) {
@@ -1718,25 +1157,7 @@ function buildReport() {
     lines.push(comments);
   }
 
-  if (parts.length) {
-    lines.push('');
-    lines.push('SPARE PARTS USED');
-    lines.push('─'.repeat(30));
-    parts.forEach(function(p){ lines.push('🔧  ' + p.qty + ' × ' + p.name + (p.code ? '  (Part #: ' + p.code + ')' : '')); });
-  }
 
-  var parkingFee = parseFloat(document.getElementById('fee-parking').value) || 0;
-  var otherFee   = parseFloat(document.getElementById('fee-other-amt').value) || 0;
-  var otherDesc  = document.getElementById('fee-other-desc').value.trim();
-  if (parkingFee > 0 || otherFee > 0) {
-    lines.push('');
-    lines.push('EXTRA FEES');
-    lines.push('─'.repeat(30));
-    if (parkingFee > 0) lines.push('💲  Parking Fee:      $' + parkingFee.toFixed(2));
-    if (otherFee > 0)   lines.push('💲  Other Fee' + (otherDesc ? ' (' + otherDesc + ')' : '') + ':  $' + otherFee.toFixed(2));
-    var totalFees = parkingFee + otherFee;
-    lines.push('   Total Extra Fees:  $' + totalFees.toFixed(2));
-  }
 
   lines.push('');
   lines.push('─'.repeat(46));
@@ -1748,14 +1169,88 @@ function buildReport() {
   return lines.join('\n');
 }
 
-// ── REPORT HTML BUILDER ───────────────────────────────────────────────────
-function buildReportHTML() {
+// ── SEND ─────────────────────────────────────────────────────────────────
+function sendReport() {
+  if (!recipients.length) { alert('Add at least one recipient email address.'); return; }
+
+  var biz     = document.getElementById('biz').value || 'Service Report';
+  var date    = document.getElementById('sdate').value;
+  var note    = document.getElementById('send-note').value.trim();
+  var subject = 'B+S Service Report - ' + biz + ' - ' + date;
+  var to      = recipients.join(',');
+  var report  = buildReport();
+
+  var hasPhotos = photos.some(function(p){ return p; });
+
+  if (hasPhotos) {
+    // Build HTML page with report + embedded photos, open in new tab for sharing
+    var photoLabels = ['Before service','After service','Non-warranty issue','Gas connections','Other'];
+    var reportLines = report.split('\n').map(function(l) {
+      if (l.indexOf('═') === 0 || l.indexOf('─') === 0) return '<hr style="border:none;border-top:1px solid #e2e8f0;margin:6px 0;">';
+      if (l.indexOf('B+S COMMERCIAL') === 0) return '<h2 style="color:#1a3a5c;font-family:Arial,sans-serif;font-size:15px;margin:0 0 4px;">' + l + '</h2>';
+      if (l.length > 2 && l === l.toUpperCase() && l.trim() !== '' && !l.match(/[✓✗⚠—★]/)) return '<h3 style="color:#1a3a5c;font-family:Arial,sans-serif;font-size:11px;margin:12px 0 3px;text-transform:uppercase;letter-spacing:0.5px;">' + l + '</h3>';
+      if (l.indexOf('✓') === 0) return '<div style="color:#16a34a;font-size:11px;font-family:monospace;padding:1px 0;">' + l + '</div>';
+      if (l.indexOf('✗') === 0) return '<div style="color:#dc2626;font-weight:bold;font-size:11px;font-family:monospace;padding:1px 0;">' + l + '</div>';
+      if (l.indexOf('⚠') === 0) return '<div style="color:#d97706;font-weight:bold;font-size:11px;padding:2px 0;">' + l + '</div>';
+      if (l.trim() === '') return '<div style="height:4px;"></div>';
+      return '<div style="font-size:11px;font-family:monospace;color:#1e293b;padding:1px 0;">' + l + '</div>';
+    }).join('');
+
+    var photoHTML = '<div style="margin-top:20px;border-top:2px solid #1a3a5c;padding-top:14px;"><h3 style="color:#1a3a5c;font-family:Arial,sans-serif;font-size:13px;margin:0 0 14px;">Service Photos</h3>';
+    photos.forEach(function(p, i) {
+      if (p) {
+        photoHTML += '<div style="margin-bottom:16px;"><img src="' + p + '" style="width:100%;max-width:560px;border-radius:8px;border:1px solid #e2e8f0;display:block;"></div>';
+      }
+    });
+    photoHTML += '</div>';
+
+    var noteHTML = note ? '<div style="background:#fff4ed;border:1px solid #fed7aa;border-radius:6px;padding:10px;margin-bottom:14px;font-family:Arial,sans-serif;font-size:12px;">' + note + '</div>' : '';
+
+    var page = '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + subject + '</title></head>' +
+      '<body style="margin:0;padding:0;background:#f0f4f8;">' +
+      '<div style="max-width:600px;margin:0 auto;background:white;min-height:100vh;">' +
+      '<div style="background:#1a3a5c;padding:16px 20px;">' +
+      '<div style="font-size:18px;font-weight:900;color:white;font-family:Arial,sans-serif;">B+S Service Report</div>' +
+      '<div style="font-size:11px;color:rgba(255,255,255,0.6);font-family:Arial,sans-serif;margin-top:2px;">' + biz + ' · ' + date + '</div>' +
+      '</div><div style="background:#f97316;height:3px;"></div>' +
+      '<div style="padding:16px 18px 40px;">' +
+      '<div style="background:#e8f0f9;border-radius:6px;padding:10px 12px;margin-bottom:14px;font-family:Arial,sans-serif;font-size:11px;color:#1a3a5c;">' +
+      '📤 <strong>To send with photos:</strong> Tap the Share button in your browser and choose Mail or Forward.' +
+      '</div>' +
+      noteHTML + reportLines + photoHTML +
+      '</div>' +
+      '<div style="background:#f8fafc;padding:12px 18px;border-top:1px solid #e2e8f0;font-size:10px;color:#94a3b8;font-family:Arial,sans-serif;">B+S Commercial Kitchens · +61 3 9469 4754 · clientservices@bscommercialkitchens.com</div>' +
+      '</div></body></html>';
+
+    // Use data: URL so the page works when shared
+    var encoded = 'data:text/html;charset=utf-8,' + encodeURIComponent(page);
+    window.open(encoded, '_blank');
+
+    // Also open mailto with plain text
+    setTimeout(function() {
+      var plainBody = (note ? note + '\n\n' : '') + report;
+      window.location.href = 'mailto:' + encodeURIComponent(to) +
+        '?subject=' + encodeURIComponent(subject) +
+        '&body='    + encodeURIComponent(plainBody);
+    }, 600);
+
+  } else {
+    // No photos — just open mailto directly
+    var plainBody = (note ? note + '\n\n' : '') + report;
+    window.location.href = 'mailto:' + encodeURIComponent(to) +
+      '?subject=' + encodeURIComponent(subject) +
+      '&body='    + encodeURIComponent(plainBody);
+  }
+
+  saveJob();
+}
+
+// ── PHOTO REPORT ────────────────────────────────────────────────────────────
+function openPhotoReport() {
   var biz    = document.getElementById('biz').value || 'Service Report';
   var date   = document.getElementById('sdate').value;
-  var sonum  = document.getElementById('sonum').value || '';
   var note   = document.getElementById('send-note').value.trim();
   var report = buildReport();
-  var subject = 'B+S Service Report - ' + (sonum ? 'SO#' + sonum + ' - ' : '') + biz + ' - ' + date;
   var photoLabels = ['Before service','After service','Non-warranty issue','Gas connections','Other'];
 
   var reportLines = report.split('\n').map(function(l) {
@@ -1771,242 +1266,55 @@ function buildReportHTML() {
       return '<div style="color:#dc2626;font-weight:bold;font-size:12px;font-family:monospace;padding:2px 0;">' + l + '</div>';
     if (l.indexOf('⚠') === 0)
       return '<div style="color:#d97706;font-weight:bold;font-size:12px;font-family:Arial,sans-serif;padding:3px 0;">' + l + '</div>';
-    if (l.indexOf('🛡️') === 0)
-      return '<div style="background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;font-weight:bold;font-size:13px;font-family:Arial,sans-serif;padding:8px 12px;border-radius:6px;margin:4px 0;">' + l + '</div>';
-    if (l.indexOf('💵') === 0)
-      return '<div style="background:#fff7ed;border:1px solid #fed7aa;color:#ea580c;font-weight:bold;font-size:13px;font-family:Arial,sans-serif;padding:8px 12px;border-radius:6px;margin:4px 0;">' + l + '</div>';
-    if (l.indexOf('🔧') === 0)
-      return '<div style="color:#0c4a6e;font-size:12px;font-family:Arial,sans-serif;padding:2px 0;">' + l + '</div>';
-    if (l.indexOf('💲') === 0 || l.trim().indexOf('Total Extra Fees') === 0)
-      return '<div style="color:#166534;font-weight:bold;font-size:12px;font-family:Arial,sans-serif;padding:2px 0;">' + l + '</div>';
     if (l.trim() === '') return '<div style="height:6px;"></div>';
     return '<div style="font-size:12px;font-family:monospace;color:#1e293b;padding:1px 0;">' + l + '</div>';
   }).join('');
 
   var photoHTML = '';
-  var anyPhotos = units.some(function(u){ return u.photos.some(function(p){ return p; }); });
-  if (anyPhotos) {
+  var hasPhotos = photos.some(function(p) { return p; });
+  if (hasPhotos) {
     photoHTML = '<div style="margin-top:24px;border-top:2px solid #1a3a5c;padding-top:16px;">' +
       '<h3 style="color:#1a3a5c;font-family:Arial,sans-serif;font-size:14px;margin:0 0 16px;">Service Photos</h3>';
-    units.forEach(function(u, ui) {
-      var hasUnitPhotos = u.photos.some(function(p){ return p; });
-      if (!hasUnitPhotos) return;
-      if (units.length > 1) {
-        photoHTML += '<div style="font-size:12px;font-weight:800;color:#1a3a5c;font-family:Arial,sans-serif;margin:0 0 10px;text-transform:uppercase;letter-spacing:0.5px;">Unit ' + (ui+1) + (u.erange ? ' — ' + u.erange + (u.etype ? ' ' + u.etype : '') : '') + '</div>';
+    photos.forEach(function(p, i) {
+      if (p) {
+        photoHTML += '<div style="margin-bottom:20px;">' +
+          '<div style="font-size:11px;font-weight:bold;color:#475569;font-family:Arial,sans-serif;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">' + photoLabels[i] + '</div>' +
+          '<img src="' + p + '" style="width:100%;max-width:560px;border-radius:8px;border:1px solid #e2e8f0;display:block;">' +
+          '</div>';
       }
-      u.photos.forEach(function(p, i) {
-        if (p) {
-          // p is already a data: URI (base64) — safe to embed directly
-          photoHTML += '<div style="margin-bottom:20px;">' +
-            '<div style="font-size:11px;font-weight:bold;color:#475569;font-family:Arial,sans-serif;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">' + photoLabels[i] + '</div>' +
-            '<img src="' + p + '" style="width:100%;max-width:560px;border-radius:8px;border:1px solid #e2e8f0;display:block;">' +
-            '</div>';
-        }
-      });
     });
     photoHTML += '</div>';
   }
 
   var noteHTML = note ? '<div style="background:#fff4ed;border:1px solid #fed7aa;border-radius:8px;padding:12px;margin-bottom:16px;font-family:Arial,sans-serif;font-size:13px;color:#1e293b;">' + note + '</div>' : '';
 
-  return '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+  var page = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
     '<meta name="viewport" content="width=device-width,initial-scale=1">' +
-    '<title>' + subject + '</title>' +
-    '<style>body{margin:0;background:#f0f4f8;}@media print{body{background:white;}.no-print{display:none!important;}}</style>' +
-    '</head><body>' +
+    '<title>B+S Service Report - ' + biz + '</title>' +
+    '<style>body{margin:0;background:#f0f4f8;}' +
+    '@media print{body{background:white;}.no-print{display:none!important;}}' +
+    '</style></head><body>' +
     '<div style="max-width:640px;margin:0 auto;background:white;min-height:100vh;">' +
     '<div style="background:#1a3a5c;padding:20px 24px;">' +
     '<div style="font-size:20px;font-weight:900;color:white;font-family:Arial,sans-serif;">B+S Service Report</div>' +
-    '<div style="font-size:12px;color:rgba(255,255,255,0.6);font-family:Arial,sans-serif;margin-top:3px;">' + biz + ' · ' + date + '</div>' +
+    '<div style="font-size:11px;color:rgba(255,255,255,0.55);font-family:Arial,sans-serif;margin-top:3px;">B+S Commercial Kitchens</div>' +
     '</div>' +
     '<div style="background:#f97316;height:4px;"></div>' +
     '<div style="padding:20px 20px 40px;">' +
-    noteHTML + reportLines + photoHTML +
+    '<div class="no-print" style="background:#e8f0f9;border-radius:8px;padding:12px;margin-bottom:16px;font-family:Arial,sans-serif;font-size:12px;color:#1a3a5c;">' +
+    '📤 <strong>To share with photos:</strong> Use the Share button in your browser, or take a screenshot and attach to your email.' +
+    '</div>' +
+    noteHTML +
+    reportLines +
+    photoHTML +
     '</div>' +
     '<div style="background:#f8fafc;padding:14px 20px;border-top:1px solid #e2e8f0;font-size:10px;color:#94a3b8;font-family:Arial,sans-serif;">' +
     'B+S Commercial Kitchens Pty Ltd · 57 Plateau Road Reservoir VIC 3073 · +61 3 9469 4754 · clientservices@bscommercialkitchens.com' +
     '</div></div></body></html>';
-}
 
-// Store the current report HTML for download
-var _currentReportHTML = '';
-var _currentReportFilename = '';
-
-function closeReportOverlay() {
-  document.getElementById('report-overlay').style.display = 'none';
-  document.getElementById('report-frame').srcdoc = '';
-  _historyJobForCSV = null;
-}
-
-function downloadReportFile() {
-  if (!_currentReportHTML) return;
-  var blob = new Blob([_currentReportHTML], {type: 'text/html;charset=utf-8'});
+  var blob = new Blob([page], {type: 'text/html'});
   var url  = URL.createObjectURL(blob);
-  var a    = document.createElement('a');
-  a.href     = url;
-  a.download = _currentReportFilename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(function(){ URL.revokeObjectURL(url); }, 5000);
-}
-
-function printReport() {
-  var printWin = window.open('', '_blank');
-  printWin.document.write(_currentReportHTML);
-  printWin.document.close();
-  printWin.focus();
-  setTimeout(function() {
-    printWin.print();
-  }, 500);
-}
-
-function downloadCSVFromHistory() {
-  // Use the history job if viewing from history, otherwise current job
-  var j = _historyJobForCSV;
-  var csvText;
-  if (j) {
-    var rows = [
-      ['Field','Value'],
-      ['Business', j.biz||''],
-      ['Address',  j.address||''],
-      ['Contact',  j.contact||''],
-      ['Phone',    j.phone||''],
-      ['Date',     j.date||''],
-      ['Technician', j.tech||''],
-      ['Sent To',  j.sent||'']
-    ];
-    var jobUnits = j.units || [{
-      erange:j.erange, etype:j.type, model:j.model, serial:j.serial,
-      gas:j.gas, warranty:j.warranty, pStatic:j.pStatic, pDynamic:j.pDynamic,
-      billing:j.billing, pass:j.pass, fail:j.fail, na:0
-    }];
-    jobUnits.forEach(function(u, ui){
-      var prefix = jobUnits.length > 1 ? 'Unit ' + (ui+1) + ' — ' : '';
-      rows.push(['', '']);
-      rows.push([prefix + 'Range', u.erange||'']);
-      rows.push([prefix + 'Type', u.etype||'']);
-      rows.push([prefix + 'Model', u.model||'']);
-      rows.push([prefix + 'Serial', u.serial||'']);
-      rows.push([prefix + 'Pass', u.pass||0]);
-      rows.push([prefix + 'Fail', u.fail||0]);
-      rows.push([prefix + 'Billing Status', u.billing === 'warranty' ? 'Warranty - No charge'
-                       : u.billing === 'chargeable' ? 'Chargeable - Bill customer'
-                       : 'Not specified']);
-    });
-    rows.push(['', '']);
-    rows.push(['Issues Count', j.flagCount||0]);
-    if (j.flags && j.flags.length) {
-      rows.push(['','']);
-      rows.push(['ISSUES','']);
-      j.flags.forEach(function(f){
-        var text = (f && typeof f === 'object') ? (f.text + (f.cat ? ' ('+f.cat+')' : '')) : String(f);
-        rows.push([text, '']);
-      });
-    }
-    if (j.parts && j.parts.length) {
-      rows.push(['','']);
-      rows.push(['SPARE PARTS USED','']);
-      j.parts.forEach(function(p){
-        rows.push([p.qty + ' x ' + p.name + (p.code ? ' (Part #: '+p.code+')' : ''), '']);
-      });
-    }
-    if ((j.feeParking||0) > 0 || (j.feeOtherAmt||0) > 0) {
-      rows.push(['','']);
-      rows.push(['EXTRA FEES','']);
-      if ((j.feeParking||0) > 0) rows.push(['Parking Fee ($)', (j.feeParking||0).toFixed(2)]);
-      if ((j.feeOtherAmt||0) > 0) rows.push(['Other Fee ($)' + (j.feeOtherDesc ? ' - ' + j.feeOtherDesc : ''), (j.feeOtherAmt||0).toFixed(2)]);
-    }
-    csvText = rows.map(function(r){
-      return r.map(function(c){ return '"' + String(c).replace(/"/g,'""') + '"'; }).join(',');
-    }).join('\n');
-    var biz  = (j.biz||'Report').replace(/[^a-zA-Z0-9_-]/g,'_');
-    var date = j.date || '';
-    var dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvText);
-    var a = document.createElement('a');
-    a.href = dataUri;
-    a.download = 'BS_Service_' + biz + '_' + date + '.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  } else {
-    downloadCSV();
-  }
-}
-
-// ── SEND ─────────────────────────────────────────────────────────────────
-function validateRequiredFields() {
-  if (!validateJobFields()) return false;
-  var missingBilling = units.some(function(u){ return !u.billing; });
-  if (missingBilling) {
-    var msg = units.length > 1
-      ? 'Please select a Billing Status (Warranty or Chargeable) for each unit before sending.'
-      : 'Please select a Billing Status (Warranty or Chargeable) before sending.';
-    alert(msg);
-    return false;
-  }
-  return true;
-}
-
-function sendReport() {
-  if (!validateRequiredFields()) return;
-  if (!recipients.length) { alert('Add at least one recipient email address.'); return; }
-
-  var biz     = document.getElementById('biz').value || 'Service Report';
-  var date    = document.getElementById('sdate').value;
-  var sonum   = document.getElementById('sonum').value || '';
-  var note    = document.getElementById('send-note').value.trim();
-  var subject = 'B+S Service Report - ' + (sonum ? 'SO#' + sonum + ' - ' : '') + biz + ' - ' + date;
-  var to      = recipients.join(',');
-  var report  = buildReport();
-  var hasPhotos = units.some(function(u){ return u.photos.some(function(p){ return p; }); });
-
-  if (hasPhotos) {
-    // Show the in-app report viewer with the self-contained HTML
-    var pageHTML = buildReportHTML();
-    var bizSafe  = biz.replace(/[^a-zA-Z0-9_-]/g, '_');
-    _currentReportHTML     = pageHTML;
-    _currentReportFilename = 'BS_Service_' + bizSafe + '_' + date + '.html';
-
-    // Display in iframe using srcdoc (no blob URL needed — works on all devices)
-    var overlay = document.getElementById('report-overlay');
-    var frame   = document.getElementById('report-frame');
-    frame.srcdoc = pageHTML;
-    overlay.style.display = 'flex';
-
-    // Also trigger mailto with plain text body
-    setTimeout(function() {
-      var plainBody = (note ? note + '\n\n' : '') + report + '\n\n[Service photos attached separately]';
-      window.location.href = 'mailto:' + encodeURIComponent(to) +
-        '?subject=' + encodeURIComponent(subject) +
-        '&body='    + encodeURIComponent(plainBody);
-    }, 800);
-
-  } else {
-    // No photos — send plain text via mailto directly
-    var plainBody = (note ? note + '\n\n' : '') + report;
-    window.location.href = 'mailto:' + encodeURIComponent(to) +
-      '?subject=' + encodeURIComponent(subject) +
-      '&body='    + encodeURIComponent(plainBody);
-  }
-
-  saveJob();
-}
-
-// ── PHOTO REPORT (called from history or elsewhere) ───────────────────────
-function openPhotoReport() {
-  if (!validateRequiredFields()) return;
-  var biz  = document.getElementById('biz').value || 'Service Report';
-  var date = document.getElementById('sdate').value;
-  var bizSafe = biz.replace(/[^a-zA-Z0-9_-]/g, '_');
-
-  var pageHTML = buildReportHTML();
-  _currentReportHTML     = pageHTML;
-  _currentReportFilename = 'BS_Service_' + bizSafe + '_' + date + '.html';
-
-  // Go straight to print dialog — skips the in-app viewer
-  printReport();
-  saveJob();
+  window.open(url, '_blank');
 }
 
 // ── CSV EXPORT ──────────────────────────────────────────────────────────────
@@ -2017,70 +1325,54 @@ function downloadCSV() {
     val = val.split('"').join('""');
     return val;
   }
-  function v(id){ var el = document.getElementById(id); return esc(el ? el.value : ''); }
+  function v(id){ return esc(document.getElementById(id).value); }
 
+  var pass=0, fail=0, na=0;
+  Object.values(states).forEach(function(s){
+    if(s==='pass') pass++; else if(s==='fail') fail++; else if(s==='na') na++;
+  });
+  var failItems = [];
+  checklist.forEach(function(item,i){ if(states[i]==='fail') failItems.push(item.t); });
   var nwIssues = flags.map(function(f){ return f.text + (f.cat ? ' ('+f.cat+')' : ''); }).join(' | ');
-  var partsUsed = parts.map(function(p){ return p.qty + ' x ' + p.name + (p.code ? ' (Part #: '+p.code+')' : ''); }).join(' | ');
-  var parkingFeeVal = parseFloat(document.getElementById('fee-parking').value) || 0;
-  var otherFeeVal   = parseFloat(document.getElementById('fee-other-amt').value) || 0;
-  var otherFeeDesc  = esc(document.getElementById('fee-other-desc').value);
 
   var headers = [
-    'Service Order #','Date','Business','Address','Contact','Phone','Technician',
-    'Unit','Range','Equipment Type','Model','Serial / Mfg Date',
-    'Gas Type','Warranty','Static Pressure (kPa)','Dynamic Pressure (kPa)','Pressure Test Result',
+    'Date','Business','Address','Contact','Phone','Technician',
+    'Range','Equipment Type','Model','Serial / Mfg Date',
+    'Gas Type','Warranty','Static Pressure (kPa)','Dynamic Pressure (kPa)',
     'Total Items','Passed','Failed','N/A',
-    'Failed Items','Non-Warranty Issues','Spare Parts Used','Comments','Billing Status',
-    'Parking Fee ($)','Other Fee ($)','Other Fee Description'
+    'Failed Items','Non-Warranty Issues','Comments'
   ];
 
-  var rows = units.map(function(u, ui) {
-    var pass=0, fail=0, na=0, failItems=[];
-    checklist.forEach(function(item,i){
-      if (item.unitIndex !== ui) return;
-      var s = states[i];
-      if (s==='pass') pass++; else if (s==='fail') { fail++; failItems.push(item.t); } else if (s==='na') na++;
-    });
-    var gasVal = u.gas === 'ng' ? 'Natural Gas (NG)' : 'LPG';
-    var warVal = u.warranty || 'Unknown';
-    var billVal = u.billing === 'warranty' ? 'Warranty - No charge'
-                 : u.billing === 'chargeable' ? 'Chargeable - Bill customer'
-                 : 'Not specified';
-    return [
-      v('sonum'), v('sdate'), v('biz'), v('address'), v('contact'), v('phone'), v('tech'),
-      (ui+1), esc(u.erange), esc(u.etype), esc(u.model), esc(u.serial),
-      gasVal, warVal,
-      esc(u.pStatic), esc(u.pDynamic),
-      esc(u.erange==='SCooker' ? '' : (u.pressureResult === 'pass' ? 'Pass' : u.pressureResult === 'fail' ? 'Fail' : '')),
-      checklist.filter(function(i){return i.unitIndex===ui;}).length, pass, fail, na,
-      failItems.join(' | '),
-      nwIssues,
-      partsUsed,
-      v('comments'),
-      billVal,
-      parkingFeeVal.toFixed(2),
-      otherFeeVal.toFixed(2),
-      otherFeeDesc
-    ];
-  });
+  var gasVal = document.getElementById('gas').value === 'ng' ? 'Natural Gas (NG)' : 'LPG';
+  var warVal = document.getElementById('warranty').value || 'Unknown';
+
+  var row = [
+    v('sdate'), v('biz'), v('address'), v('contact'), v('phone'), v('tech'),
+    v('erange'), v('etype'), v('model'), v('serial'),
+    gasVal, warVal,
+    v('p-static'), v('p-dynamic'),
+    checklist.length, pass, fail, na,
+    failItems.join(' | '),
+    nwIssues,
+    v('comments')
+  ];
 
   var csvHeader = headers.map(function(h){ return '"' + h + '"'; }).join(',');
-  var csvRows   = rows.map(function(row){ return row.map(function(c){ return '"' + c + '"'; }).join(','); });
-  var csv       = csvHeader + '\n' + csvRows.join('\n');
+  var csvRow    = row.map(function(c){ return '"' + c + '"'; }).join(',');
+  var csv       = csvHeader + '\n' + csvRow;
 
+  var blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
   var bizRaw = document.getElementById('biz').value || 'Report';
-  var biz  = bizRaw.replace(/[^a-zA-Z0-9_-]/g, '_');
+  var biz  = bizRaw.split(' ').join('_');
   var date = document.getElementById('sdate').value || new Date().toISOString().split('T')[0];
-  var filename = 'BS_Service_' + biz + '_' + date + '.csv';
-
-  // Use data URI instead of blob URL so it works when shared
-  var dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  var a = document.createElement('a');
-  a.href     = dataUri;
-  a.download = filename;
+  a.href     = url;
+  a.download = 'BS_Service_' + biz + '_' + date + '.csv';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 // ── PREVIEW ───────────────────────────────────────────────────────────────
@@ -2091,258 +1383,42 @@ function previewReport() {
 
 // ── HISTORY ───────────────────────────────────────────────────────────────
 function saveJob() {
-  var pass=0, fail=0;
-  Object.values(states).forEach(function(s){ if(s==='pass')pass++; else if(s==='fail')fail++; });
-
-  var unitSummaries = units.map(function(u, ui) {
-    var upass=0, ufail=0, una=0;
-    checklist.forEach(function(item,i){
-      if (item.unitIndex !== ui) return;
-      var s = states[i];
-      if (s==='pass') upass++; else if (s==='fail') ufail++; else if (s==='na') una++;
-    });
-    return {
-      erange: u.erange, etype: u.etype, model: u.model, serial: u.serial,
-      gas: u.gas, warranty: u.warranty,
-      pStatic: u.pStatic, pDynamic: u.pDynamic, pErrorCode: u.pErrorCode, pressureResult: u.pressureResult,
-      billing: u.billing,
-      pass: upass, fail: ufail, na: una,
-      photos: u.photos.slice()
-    };
-  });
-
-  var job = {
-    id: Date.now(),
-    sonum:     document.getElementById('sonum').value,
-    biz:       document.getElementById('biz').value,
-    address:   document.getElementById('address').value,
-    contact:   document.getElementById('contact').value,
-    phone:     document.getElementById('phone').value,
-    date:      document.getElementById('sdate').value,
-    tech:      document.getElementById('tech').value,
-    units:     unitSummaries,
-    erange:    units.length === 1 ? units[0].erange : (units.length + ' units'),
-    type:      units.length === 1 ? units[0].etype  : units.map(function(u){return u.etype;}).join(', '),
+  var pass = Object.values(states).filter(function(v){ return v==='pass'; }).length;
+  var fail = Object.values(states).filter(function(v){ return v==='fail'; }).length;
+  jobs.unshift({
+    biz:  document.getElementById('biz').value,
+    type: document.getElementById('etype').value,
+    date: document.getElementById('sdate').value,
+    tech: document.getElementById('tech').value,
     pass: pass, fail: fail,
     hasIssues: fail > 0 || flags.length > 0,
     flagCount: flags.length,
-    sent:      recipients.join(', '),
-    billing:   units.length === 1 ? (units[0].billing || 'unspecified') : 'mixed',
-    // Save full data for report replay
-    reportText: buildReport(),
-    flags:     flags.slice(),
-    parts:     parts.slice(),
-    feeParking: parseFloat(document.getElementById('fee-parking').value) || 0,
-    feeOtherAmt: parseFloat(document.getElementById('fee-other-amt').value) || 0,
-    feeOtherDesc: document.getElementById('fee-other-desc').value,
-    states:    JSON.parse(JSON.stringify(states)),
-    checklist: checklist.map(function(i){ return {t:i.t,c:i.c,unitIndex:i.unitIndex}; })
-  };
-  jobs.unshift(job);
-  // Persist — strip photos if storage is getting full (photos are large)
-  try {
-    localStorage.setItem('bs_jobs_v2', JSON.stringify(jobs));
-  } catch(e) {
-    try {
-      var slim = jobs.map(function(j){
-        var s = Object.assign({}, j);
-        s.units = (j.units||[]).map(function(u){ var uu = Object.assign({},u); uu.photos=[null,null,null,null,null]; return uu; });
-        return s;
-      });
-      localStorage.setItem('bs_jobs_v2', JSON.stringify(slim));
-    } catch(e2) {}
-  }
-
-  // Post to Google Sheets (fire and forget) — one row per unit
-  try {
-    units.forEach(function(u, ui) {
-      var upass=0, ufail=0;
-      checklist.forEach(function(item,i){
-        if (item.unitIndex !== ui) return;
-        var s = states[i];
-        if (s==='pass') upass++; else if (s==='fail') ufail++;
-      });
-      var img = new Image();
-      img.src = SHEETS_URL + '?data=' + encodeURIComponent(JSON.stringify({
-        sonum:     job.sonum,
-        date:      job.date,
-        biz:       job.biz,
-        address:   job.address,
-        contact:   job.contact,
-        phone:     job.phone,
-        erange:    u.erange,
-        type:      u.etype,
-        model:     u.model,
-        serial:    u.serial,
-        tech:      job.tech,
-        pass:      upass,
-        fail:      ufail,
-        flagCount: job.flagCount,
-        flags:     job.flags,
-        sent:      job.sent,
-        billing:   u.billing
-      }));
-    });
-  } catch(e) {}
+    sent: recipients.join(', ')
+  });
   renderHistory();
   go('history');
 }
 
-// ── HISTORY PASSWORD ──────────────────────────────────────────────────────
-var _historyUnlocked = false;
-
-function cancelHistoryUnlock() {
-  document.getElementById('hist-pw-overlay').style.display = 'none';
-  document.getElementById('hist-pw-input').value = '';
-  document.getElementById('hist-pw-error').textContent = '';
-  go('job');
-}
-
-function unlockHistory() {
-  var entered = document.getElementById('hist-pw-input').value;
-  if (entered === HISTORY_PASSWORD) {
-    _historyUnlocked = true;
-    document.getElementById('hist-pw-overlay').style.display = 'none';
-    renderHistoryList();
-  } else {
-    var err = document.getElementById('hist-pw-error');
-    err.textContent = 'Incorrect password.';
-    document.getElementById('hist-pw-input').value = '';
-    setTimeout(function(){ err.textContent = ''; }, 3000);
-  }
-}
-
-function openHistoryJob(idx) {
-  var j = jobs[idx];
-  if (!j) return;
-  // Restore report data into module-level vars so buildReportHTML() works
-  _currentReportHTML = buildReportHTMLFromJob(j);
-  var bizSafe = (j.biz||'Report').replace(/[^a-zA-Z0-9_-]/g,'_');
-  _currentReportFilename = 'BS_Service_' + bizSafe + '_' + (j.date||'') + '.html';
-
-  var overlay = document.getElementById('report-overlay');
-  var frame   = document.getElementById('report-frame');
-  frame.srcdoc = _currentReportHTML;
-  overlay.style.display = 'flex';
-
-  // Also set up CSV for this job
-  _historyJobForCSV = j;
-}
-
-var _historyJobForCSV = null;
-
-function buildReportHTMLFromJob(j) {
-  // Use saved reportText for the report body (already fully built at send time)
-  return buildReportHTMLWithText(j.reportText || '', j);
-}
-
-function buildReportHTMLWithText(reportText, j) {
-  var biz  = j.biz  || '—';
-  var date = j.date || '—';
-  var note = '';
-  var photoLabels = PHOTO_LABELS;
-  var jobUnits = (j.units && j.units.length) ? j.units : [{ photos: (j.photos || [null,null,null,null,null]), erange:j.erange, etype:j.type }];
-
-  var reportLines = reportText.split('\n').map(function(l) {
-    if (l.indexOf('═') === 0 || l.indexOf('─') === 0)
-      return '<hr style="border:none;border-top:1px solid #e2e8f0;margin:8px 0;">';
-    if (l.indexOf('B+S COMMERCIAL') === 0)
-      return '<h2 style="color:#1a3a5c;font-family:Arial,sans-serif;font-size:16px;margin:0 0 4px;">' + l + '</h2>';
-    if (l.length > 2 && l === l.toUpperCase() && l.trim() !== '' && !l.match(/[✓✗⚠—★]/))
-      return '<h3 style="color:#1a3a5c;font-family:Arial,sans-serif;font-size:12px;margin:14px 0 4px;text-transform:uppercase;letter-spacing:0.5px;">' + l + '</h3>';
-    if (l.indexOf('✓') === 0)
-      return '<div style="color:#16a34a;font-size:12px;font-family:monospace;padding:2px 0;">' + l + '</div>';
-    if (l.indexOf('✗') === 0)
-      return '<div style="color:#dc2626;font-weight:bold;font-size:12px;font-family:monospace;padding:2px 0;">' + l + '</div>';
-    if (l.indexOf('⚠') === 0)
-      return '<div style="color:#d97706;font-weight:bold;font-size:12px;font-family:Arial,sans-serif;padding:3px 0;">' + l + '</div>';
-    if (l.indexOf('🛡️') === 0)
-      return '<div style="background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;font-weight:bold;font-size:13px;font-family:Arial,sans-serif;padding:8px 12px;border-radius:6px;margin:4px 0;">' + l + '</div>';
-    if (l.indexOf('💵') === 0)
-      return '<div style="background:#fff7ed;border:1px solid #fed7aa;color:#ea580c;font-weight:bold;font-size:13px;font-family:Arial,sans-serif;padding:8px 12px;border-radius:6px;margin:4px 0;">' + l + '</div>';
-    if (l.indexOf('🔧') === 0)
-      return '<div style="color:#0c4a6e;font-size:12px;font-family:Arial,sans-serif;padding:2px 0;">' + l + '</div>';
-    if (l.indexOf('💲') === 0 || l.trim().indexOf('Total Extra Fees') === 0)
-      return '<div style="color:#166534;font-weight:bold;font-size:12px;font-family:Arial,sans-serif;padding:2px 0;">' + l + '</div>';
-    if (l.trim() === '') return '<div style="height:6px;"></div>';
-    return '<div style="font-size:12px;font-family:monospace;color:#1e293b;padding:1px 0;">' + l + '</div>';
-  }).join('');
-
-  var photoHTML = '';
-  var hasPhotos = jobUnits.some(function(u){ return (u.photos||[]).some(function(p){ return p; }); });
-  if (hasPhotos) {
-    photoHTML = '<div style="margin-top:24px;border-top:2px solid #1a3a5c;padding-top:16px;">' +
-      '<h3 style="color:#1a3a5c;font-family:Arial,sans-serif;font-size:14px;margin:0 0 16px;">Service Photos</h3>';
-    jobUnits.forEach(function(u, ui) {
-      var uPhotos = u.photos || [];
-      if (!uPhotos.some(function(p){return p;})) return;
-      if (jobUnits.length > 1) {
-        photoHTML += '<div style="font-size:12px;font-weight:800;color:#1a3a5c;font-family:Arial,sans-serif;margin:0 0 10px;text-transform:uppercase;letter-spacing:0.5px;">Unit ' + (ui+1) + (u.erange ? ' — ' + u.erange + (u.etype ? ' ' + u.etype : '') : '') + '</div>';
-      }
-      uPhotos.forEach(function(p, i) {
-        if (p) {
-          photoHTML += '<div style="margin-bottom:20px;">' +
-            '<div style="font-size:11px;font-weight:bold;color:#475569;font-family:Arial,sans-serif;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">' + photoLabels[i] + '</div>' +
-            '<img src="' + p + '" style="width:100%;max-width:560px;border-radius:8px;border:1px solid #e2e8f0;display:block;">' +
-            '</div>';
-        }
-      });
-    });
-    photoHTML += '</div>';
-  }
-
-  var subject = 'B+S Service Report - ' + (j.sonum ? 'SO#' + j.sonum + ' - ' : '') + biz + ' - ' + date;
-  return '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
-    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
-    '<title>' + subject + '</title>' +
-    '<style>body{margin:0;background:#f0f4f8;}@media print{body{background:white;}.no-print{display:none!important;}}</style>' +
-    '</head><body>' +
-    '<div style="max-width:640px;margin:0 auto;background:white;min-height:100vh;">' +
-    '<div style="background:#1a3a5c;padding:20px 24px;">' +
-    '<div style="font-size:20px;font-weight:900;color:white;font-family:Arial,sans-serif;">B+S Service Report</div>' +
-    '<div style="font-size:12px;color:rgba(255,255,255,0.6);font-family:Arial,sans-serif;margin-top:3px;">' + biz + ' · ' + date + '</div>' +
-    '</div>' +
-    '<div style="background:#f97316;height:4px;"></div>' +
-    '<div style="padding:20px 20px 40px;">' +
-    reportLines + photoHTML +
-    '</div>' +
-    '<div style="background:#f8fafc;padding:14px 20px;border-top:1px solid #e2e8f0;font-size:10px;color:#94a3b8;font-family:Arial,sans-serif;">' +
-    'B+S Commercial Kitchens Pty Ltd · 57 Plateau Road Reservoir VIC 3073 · +61 3 9469 4754 · clientservices@bscommercialkitchens.com' +
-    '</div></div></body></html>';
-}
-
 function renderHistory() {
-  if (_historyUnlocked) renderHistoryList();
-}
-
-function renderHistoryList() {
   var c = document.getElementById('hist-list');
   if (!jobs.length) {
     c.innerHTML = '<div class="empty"><div class="empty-icon">📁</div><div class="empty-txt">No jobs yet</div><div class="empty-sub">Sent jobs appear here</div></div>';
     return;
   }
-  c.innerHTML = '<div class="card"><div>' + jobs.map(function(j, idx){
+  c.innerHTML = '<div class="card"><div>' + jobs.map(function(j){
     var d = j.date ? new Date(j.date).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : '—';
-    var hasPhotos = j.units && j.units.some(function(u){ return (u.photos||[]).some(function(p){ return p; }); });
-    return '<div class="hist-item" onclick="openHistoryJob(' + idx + ')" style="cursor:pointer;">' +
+    return '<div class="hist-item">' +
       '<div class="hist-dot ' + (j.hasIssues?'bad':'ok') + '"></div>' +
       '<div style="flex:1">' +
-        '<div class="hist-biz">' + (j.biz||'—') + (j.sonum ? ' <span style="font-weight:500;color:var(--muted);font-size:11px;">· SO# ' + j.sonum + '</span>' : '') + '</div>' +
+        '<div class="hist-biz">' + j.biz + '</div>' +
         '<div class="hist-meta">' + (j.type||'—') + ' · ' + d + ' · ' + (j.tech||'—') + '</div>' +
         '<div>' +
           '<span class="badge b-pass">✓ ' + j.pass + '</span>' +
           (j.fail  ? '<span class="badge b-fail">✗ ' + j.fail + '</span>' : '') +
           (j.flagCount ? '<span class="badge b-warn">⚠ ' + j.flagCount + ' issues</span>' : '') +
-          (hasPhotos ? '<span class="badge" style="background:#e0f2fe;color:#0369a1;">📷 photos</span>' : '') +
-          (j.billing === 'warranty' ? '<span class="badge" style="background:#f0fdf4;color:#16a34a;">🛡️ Warranty</span>'
-            : j.billing === 'chargeable' ? '<span class="badge" style="background:#fff7ed;color:#ea580c;">💵 Chargeable</span>'
-            : j.billing === 'mixed' ? '<span class="badge" style="background:#fef9c3;color:#854d0e;">🛡️💵 Mixed billing</span>'
-            : '<span class="badge" style="background:#f1f5f9;color:#64748b;">Billing not set</span>') +
-          (j.units && j.units.length > 1 ? '<span class="badge" style="background:#ede9fe;color:#7c3aed;">' + j.units.length + ' units</span>' : '') +
         '</div>' +
-        '<div style="font-size:10px;color:var(--muted);margin-top:3px;">Sent to: ' + (j.sent||'—') + '</div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-top:3px;">Sent to: ' + j.sent + '</div>' +
       '</div>' +
-      '<div style="font-size:18px;color:var(--muted);padding-left:6px;">›</div>' +
     '</div>';
   }).join('') + '</div></div>';
 }
@@ -2354,7 +1430,7 @@ function checkPassword() {
   var entered = document.getElementById('pw-input').value;
   if (entered === APP_PASSWORD) {
     document.getElementById('pw-screen').style.display = 'none';
-    try { sessionStorage.setItem('bs_unlocked', '1'); } catch(e) {}
+    localStorage.setItem('bs_unlocked', '1');
   } else {
     var err = document.getElementById('pw-error');
     err.textContent = 'Incorrect password. Try again.';
@@ -2365,11 +1441,9 @@ function checkPassword() {
 }
 
 // Auto-unlock if already authenticated this session
-try {
-  if (sessionStorage.getItem('bs_unlocked') === '1') {
-    document.getElementById('pw-screen').style.display = 'none';
-  }
-} catch(e) {}
+if (localStorage.getItem('bs_unlocked') === '1') {
+  document.getElementById('pw-screen').style.display = 'none';
+}
 
 
 // ── ERROR CODES ───────────────────────────────────────────────────────────────
